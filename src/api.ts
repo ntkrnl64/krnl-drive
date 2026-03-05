@@ -213,6 +213,11 @@ export const sharesApi = {
     req<{ share: Share; file: FileItem; display: { title: string; description: string } }>(`/share/${token}`),
 
   downloadUrl: (token: string) => `${BASE}/share/${token}/download`,
+
+  browse: (token: string, folderId?: string) =>
+    req<{ items: FileItem[] }>(`/share/${token}/browse${folderId ? `?folderId=${encodeURIComponent(folderId)}` : ''}`),
+
+  fileDownloadUrl: (token: string, fileId: string) => `${BASE}/share/${token}/file/${encodeURIComponent(fileId)}/download`,
 };
 
 // ─── Admin ────────────────────────────────────────────────────────────────────

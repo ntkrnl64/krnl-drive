@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { getShareByToken, getFile, incrementShareView, incrementShareDownload, getSettings } from './db.ts';
+import { getShareByToken, getFile, incrementShareView, incrementShareDownload, getSettings, listFiles, isDescendantOf } from './db.ts';
 import { hashPassword, randomId } from './crypto.ts';
 import authRoutes from './routes/auth.ts';
 import fileRoutes from './routes/files.ts';
@@ -107,6 +107,57 @@ app.get('/api/share/:token/download', async (c) => {
   }
 
   const file = await getFile(c.env.DB, share.file_id);
+  if (!file || file.type !== 'file' || !file.r2_key) return c.json({ error: 'Not found' }, 404);
+
+  const obj = await c.env.BUCKET.get(file.r2_key);
+  if (!obj) return c.json({ error: 'Not found in storage' }, 404);
+
+  await incrementShareDownload(c.env.DB, share.id);
+
+  const headers = new Headers();
+  headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
+  headers.set('Content-Type', file.mime_type ?? 'application/octet-stream');
+  headers.set('Content-Length', file.size.toString());
+  return new Response(obj.body, { headers });
+});
+
+// GET /api/share/:token/browse?folderId=<id>  — list contents of a shared folder (or subfolder)
+app.get('/api/share/:token/browse', async (c) => {
+  const share = await getShareByToken(c.env.DB, c.req.param('token'));
+  if (!share) return c.json({ error: 'Share not found' }, 404);
+  if (share.expires_at && Date.now() > share.expires_at) return c.json({ error: 'Expired' }, 410);
+  if (share.max_views !== null && share.view_count >= share.max_views) return c.json({ error: 'View limit reached' }, 410);
+
+  const rootFile = await getFile(c.env.DB, share.file_id);
+  if (!rootFile || rootFile.type !== 'folder') return c.json({ error: 'Not a folder share' }, 400);
+
+  const folderId = c.req.query('folderId') ?? share.file_id;
+  if (folderId !== share.file_id) {
+    const ok = await isDescendantOf(c.env.DB, folderId, share.file_id);
+    if (!ok) return c.json({ error: 'Forbidden' }, 403);
+  }
+
+  const items = await listFiles(c.env.DB, folderId);
+  return c.json({ items: items.map(({ r2_key: _, owner_id: __, ...item }) => item) });
+});
+
+// GET /api/share/:token/file/:fileId/download  — download a file inside a shared folder
+app.get('/api/share/:token/file/:fileId/download', async (c) => {
+  const share = await getShareByToken(c.env.DB, c.req.param('token'));
+  if (!share) return c.json({ error: 'Share not found' }, 404);
+  if (share.expires_at && Date.now() > share.expires_at) return c.json({ error: 'Expired' }, 410);
+  if (share.max_downloads !== null && share.download_count >= share.max_downloads) {
+    return c.json({ error: 'Download limit reached' }, 410);
+  }
+
+  const rootFile = await getFile(c.env.DB, share.file_id);
+  if (!rootFile || rootFile.type !== 'folder') return c.json({ error: 'Not a folder share' }, 400);
+
+  const fileId = c.req.param('fileId')!;
+  const ok = await isDescendantOf(c.env.DB, fileId, share.file_id);
+  if (!ok) return c.json({ error: 'Forbidden' }, 403);
+
+  const file = await getFile(c.env.DB, fileId);
   if (!file || file.type !== 'file' || !file.r2_key) return c.json({ error: 'Not found' }, 404);
 
   const obj = await c.env.BUCKET.get(file.r2_key);

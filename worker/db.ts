@@ -206,6 +206,19 @@ export async function deleteShare(db: D1Database, id: string): Promise<void> {
   await db.prepare('DELETE FROM shares WHERE id=?').bind(id).run();
 }
 
+// Returns true if childId equals ancestorId, or if childId is a descendant of ancestorId.
+export async function isDescendantOf(db: D1Database, childId: string, ancestorId: string): Promise<boolean> {
+  if (childId === ancestorId) return true;
+  let current = childId;
+  for (let i = 0; i < 64; i++) {
+    const row = await db.prepare('SELECT parent_id FROM files WHERE id=?').bind(current).first<{ parent_id: string | null }>();
+    if (!row || row.parent_id === null) return false;
+    if (row.parent_id === ancestorId) return true;
+    current = row.parent_id;
+  }
+  return false;
+}
+
 // ─── Upload sessions ─────────────────────────────────────────────────────────
 
 export async function createUploadSession(
