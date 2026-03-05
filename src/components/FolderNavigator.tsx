@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbButton, BreadcrumbDivider,
   Button, Spinner, Text, makeStyles, shorthands, mergeClasses
@@ -76,17 +76,20 @@ export function FolderNavigator({ initialFolderId = null, onSelect, excludeItemI
   const [folders, setFolders] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(initialFolderId);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
   // Initialize selected folder with currentParentId if available, or initialFolderId
   useEffect(() => {
     if (currentParentId !== undefined) {
       setSelectedFolderId(currentParentId);
-      onSelect(currentParentId);
+      onSelectRef.current(currentParentId);
     } else {
-      setSelectedFolderId(initialFolderId);
-      onSelect(initialFolderId);
+      setSelectedFolderId(initialFolderId ?? null);
+      onSelectRef.current(initialFolderId ?? null);
     }
-  }, [initialFolderId, currentParentId, onSelect]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFolderId, currentParentId]);
 
 
   const loadFolders = useCallback(async (parentId: string | null) => {
