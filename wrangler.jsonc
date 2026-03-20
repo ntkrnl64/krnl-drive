@@ -30,7 +30,7 @@
 		}
 	],
 	"vars": {
-		"ORIGIN": "http://localhost:5173"
+		"ORIGIN": "https://drive.krnl64.win"
 	},
 	"routes": [
 		{
