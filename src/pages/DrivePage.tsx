@@ -38,6 +38,7 @@ import {
 } from "@fluentui/react-icons";
 import { filesApi } from "../api.ts";
 import { useAuth } from "../contexts/AuthContext.tsx";
+import { UploadProvider } from "../contexts/UploadContext.tsx";
 import FileList from "../components/FileList.tsx";
 import UploadZone from "../components/UploadZone.tsx";
 import ShareDialog from "../components/ShareDialog.tsx";
@@ -213,208 +214,207 @@ export default function DrivePage() {
   const isGuest = user?.role === "guest";
 
   return (
-    <div className={styles.root}>
-      {/* Header: breadcrumb + actions */}
-      <div className={styles.header}>
-        <div className={styles.headerBreadcrumb}>
-          <Breadcrumb>
-            {breadcrumb.map((entry, idx) => (
-              <span key={entry.id ?? "root"} style={{ display: "contents" }}>
-                {idx > 0 && <BreadcrumbDivider />}
-                <BreadcrumbItem>
-                  <BreadcrumbButton
-                    current={idx === breadcrumb.length - 1}
-                    icon={idx === 0 ? <HomeRegular /> : undefined}
-                    onClick={() => navigateTo(entry)}
-                  >
-                    {entry.name}
-                  </BreadcrumbButton>
-                </BreadcrumbItem>
-              </span>
-            ))}
-          </Breadcrumb>
-        </div>
-        <div className={styles.headerActions}>
-          {selected.size > 0 && !isGuest && (
-            <Button
-              appearance="subtle"
-              size="small"
-              icon={<DeleteRegular />}
-              onClick={() => setDeleteBatchOpen(true)}
-            >
-              Delete ({selected.size})
-            </Button>
-          )}
-          {!isGuest && (
-            <>
+    <UploadProvider onUploaded={() => void load()}>
+      <div className={styles.root}>
+        {/* Header: breadcrumb + actions */}
+        <div className={styles.header}>
+          <div className={styles.headerBreadcrumb}>
+            <Breadcrumb>
+              {breadcrumb.map((entry, idx) => (
+                <span key={entry.id ?? "root"} style={{ display: "contents" }}>
+                  {idx > 0 && <BreadcrumbDivider />}
+                  <BreadcrumbItem>
+                    <BreadcrumbButton
+                      current={idx === breadcrumb.length - 1}
+                      icon={idx === 0 ? <HomeRegular /> : undefined}
+                      onClick={() => navigateTo(entry)}
+                    >
+                      {entry.name}
+                    </BreadcrumbButton>
+                  </BreadcrumbItem>
+                </span>
+              ))}
+            </Breadcrumb>
+          </div>
+          <div className={styles.headerActions}>
+            {selected.size > 0 && !isGuest && (
               <Button
                 appearance="subtle"
                 size="small"
-                icon={<FolderAddRegular />}
-                onClick={() => setCreateFolderOpen(true)}
+                icon={<DeleteRegular />}
+                onClick={() => setDeleteBatchOpen(true)}
               >
-                New Folder
+                Delete ({selected.size})
               </Button>
-              <Popover positioning="below-end" trapFocus={false}>
-                <PopoverTrigger disableButtonEnhancement>
-                  <Button
-                    id="upload-button"
-                    appearance="subtle"
-                    size="small"
-                    icon={<ArrowUploadRegular />}
-                  >
-                    Upload
-                  </Button>
-                </PopoverTrigger>
-                <PopoverSurface style={{ padding: "16px", width: "360px" }}>
-                  <UploadZone
-                    parentId={currentId}
-                    onUploaded={() => void load()}
-                  />
-                </PopoverSurface>
-              </Popover>
-            </>
-          )}
-          <Button
-            appearance="subtle"
-            size="small"
-            icon={<ArrowSyncRegular />}
-            onClick={() => void load()}
-          />
-        </div>
-      </div>
-
-      {/* File list */}
-      <Menu openOnContext>
-        <MenuTrigger disableButtonEnhancement>
-          <div className={styles.listContainer}>
-            {loading ? (
-              <div className={styles.loadingContainer}>
-                <Spinner label="Loading files..." />
-              </div>
-            ) : (
-              <FileList
-                items={items}
-                currentUser={user!}
-                onNavigate={navigate}
-                onDelete={(item) => setDeleteItem(item)}
-                onRename={(item) => setRenameItem(item)}
-                onShare={(item) => setShareItem(item)}
-                onMove={(item) => setMoveItem(item)}
-                onCopy={(item) => setCopyItem(item)}
-                selected={selected}
-                onSelectionChange={toggleSelection}
-              />
             )}
-          </div>
-        </MenuTrigger>
-        <MenuPopover>
-          <MenuList>
             {!isGuest && (
               <>
-                <MenuItem
+                <Button
+                  appearance="subtle"
+                  size="small"
                   icon={<FolderAddRegular />}
                   onClick={() => setCreateFolderOpen(true)}
                 >
                   New Folder
-                </MenuItem>
-                <MenuItem
-                  icon={<ArrowUploadRegular />}
-                  onClick={() =>
-                    document.getElementById("upload-button")?.click()
-                  }
-                >
-                  Upload
-                </MenuItem>
+                </Button>
+                <Popover positioning="below-end" trapFocus={false}>
+                  <PopoverTrigger disableButtonEnhancement>
+                    <Button
+                      id="upload-button"
+                      appearance="subtle"
+                      size="small"
+                      icon={<ArrowUploadRegular />}
+                    >
+                      Upload
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverSurface style={{ padding: "16px", width: "360px" }}>
+                    <UploadZone parentId={currentId} />
+                  </PopoverSurface>
+                </Popover>
               </>
             )}
-            {currentId && (
-              <MenuItem
-                icon={<CodeRegular />}
-                onClick={() => void navigator.clipboard.writeText(currentId)}
-              >
-                Copy Current Folder ID
+            <Button
+              appearance="subtle"
+              size="small"
+              icon={<ArrowSyncRegular />}
+              onClick={() => void load()}
+            />
+          </div>
+        </div>
+
+        {/* File list */}
+        <Menu openOnContext>
+          <MenuTrigger disableButtonEnhancement>
+            <div className={styles.listContainer}>
+              {loading ? (
+                <div className={styles.loadingContainer}>
+                  <Spinner label="Loading files..." />
+                </div>
+              ) : (
+                <FileList
+                  items={items}
+                  currentUser={user!}
+                  onNavigate={navigate}
+                  onDelete={(item) => setDeleteItem(item)}
+                  onRename={(item) => setRenameItem(item)}
+                  onShare={(item) => setShareItem(item)}
+                  onMove={(item) => setMoveItem(item)}
+                  onCopy={(item) => setCopyItem(item)}
+                  selected={selected}
+                  onSelectionChange={toggleSelection}
+                />
+              )}
+            </div>
+          </MenuTrigger>
+          <MenuPopover>
+            <MenuList>
+              {!isGuest && (
+                <>
+                  <MenuItem
+                    icon={<FolderAddRegular />}
+                    onClick={() => setCreateFolderOpen(true)}
+                  >
+                    New Folder
+                  </MenuItem>
+                  <MenuItem
+                    icon={<ArrowUploadRegular />}
+                    onClick={() =>
+                      document.getElementById("upload-button")?.click()
+                    }
+                  >
+                    Upload
+                  </MenuItem>
+                </>
+              )}
+              {currentId && (
+                <MenuItem
+                  icon={<CodeRegular />}
+                  onClick={() => void navigator.clipboard.writeText(currentId)}
+                >
+                  Copy Current Folder ID
+                </MenuItem>
+              )}
+              <MenuItem icon={<ArrowSyncRegular />} onClick={() => void load()}>
+                Refresh
               </MenuItem>
-            )}
-            <MenuItem icon={<ArrowSyncRegular />} onClick={() => void load()}>
-              Refresh
-            </MenuItem>
-          </MenuList>
-        </MenuPopover>
-      </Menu>
+            </MenuList>
+          </MenuPopover>
+        </Menu>
 
-      {/* Dialogs */}
-      <CreateFolderDialog
-        open={createFolderOpen}
-        onClose={() => setCreateFolderOpen(false)}
-        onCreate={handleCreateFolder}
-      />
-      <RenameDialog
-        item={renameItem}
-        open={!!renameItem}
-        onClose={() => setRenameItem(null)}
-        onRename={handleRename}
-      />
-      <DeleteDialog
-        item={deleteItem}
-        open={!!deleteItem}
-        onClose={() => setDeleteItem(null)}
-        onDelete={handleDelete}
-      />
-      <ShareDialog
-        file={shareItem}
-        open={!!shareItem}
-        onClose={() => setShareItem(null)}
-      />
-      <MoveDialog
-        item={moveItem}
-        open={!!moveItem}
-        onClose={() => setMoveItem(null)}
-        onMove={handleMove}
-        currentParentId={currentId}
-      />
-      <CopyDialog
-        item={copyItem}
-        open={!!copyItem}
-        onClose={() => setCopyItem(null)}
-        onCopy={handleCopy}
-        currentParentId={currentId}
-      />
+        {/* Dialogs */}
+        <CreateFolderDialog
+          open={createFolderOpen}
+          onClose={() => setCreateFolderOpen(false)}
+          onCreate={handleCreateFolder}
+        />
+        <RenameDialog
+          item={renameItem}
+          open={!!renameItem}
+          onClose={() => setRenameItem(null)}
+          onRename={handleRename}
+        />
+        <DeleteDialog
+          item={deleteItem}
+          open={!!deleteItem}
+          onClose={() => setDeleteItem(null)}
+          onDelete={handleDelete}
+        />
+        <ShareDialog
+          file={shareItem}
+          open={!!shareItem}
+          onClose={() => setShareItem(null)}
+        />
+        <MoveDialog
+          item={moveItem}
+          open={!!moveItem}
+          onClose={() => setMoveItem(null)}
+          onMove={handleMove}
+          currentParentId={currentId}
+        />
+        <CopyDialog
+          item={copyItem}
+          open={!!copyItem}
+          onClose={() => setCopyItem(null)}
+          onCopy={handleCopy}
+          currentParentId={currentId}
+        />
 
-      {/* Batch delete confirm */}
-      <Dialog
-        open={deleteBatchOpen}
-        onOpenChange={(_, d) => !d.open && setDeleteBatchOpen(false)}
-      >
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Delete {selected.size} item(s)?</DialogTitle>
-            <DialogContent>
-              <Text>
-                This will permanently delete the selected items. This cannot be
-                undone.
-              </Text>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                appearance="secondary"
-                onClick={() => setDeleteBatchOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                style={{
-                  background: "var(--colorPaletteRedBackground3)",
-                  color: "white",
-                }}
-                onClick={handleDeleteSelected}
-              >
-                Delete all
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
-    </div>
+        {/* Batch delete confirm */}
+        <Dialog
+          open={deleteBatchOpen}
+          onOpenChange={(_, d) => !d.open && setDeleteBatchOpen(false)}
+        >
+          <DialogSurface>
+            <DialogBody>
+              <DialogTitle>Delete {selected.size} item(s)?</DialogTitle>
+              <DialogContent>
+                <Text>
+                  This will permanently delete the selected items. This cannot
+                  be undone.
+                </Text>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  appearance="secondary"
+                  onClick={() => setDeleteBatchOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  style={{
+                    background: "var(--colorPaletteRedBackground3)",
+                    color: "white",
+                  }}
+                  onClick={handleDeleteSelected}
+                >
+                  Delete all
+                </Button>
+              </DialogActions>
+            </DialogBody>
+          </DialogSurface>
+        </Dialog>
+      </div>
+    </UploadProvider>
   );
 }
