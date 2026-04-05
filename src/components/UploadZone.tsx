@@ -162,6 +162,14 @@ export default function UploadZone({ parentId }: UploadZoneProps) {
 
   return (
     <div className={styles.container}>
+      {/* Hidden file input for resume (outside drop zone to avoid click conflicts) */}
+      <input
+        ref={resumeInput}
+        type="file"
+        hidden
+        onChange={onResumeFileSelect}
+      />
+
       {/* Drop zone */}
       <div
         onDragOver={onDragOver}
@@ -179,12 +187,6 @@ export default function UploadZone({ parentId }: UploadZoneProps) {
           multiple
           hidden
           onChange={onFileSelect}
-        />
-        <input
-          ref={resumeInput}
-          type="file"
-          hidden
-          onChange={onResumeFileSelect}
         />
         <ArrowUploadRegular className={styles.icon} />
         <Text block weight="semibold">
