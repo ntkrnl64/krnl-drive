@@ -1,20 +1,33 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { ReactNode } from 'react';
-import { authApi, getConfig } from '../api.ts';
-import type { User, SiteConfig } from '../types.ts';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import type { ReactNode } from "react";
+import { authApi, getConfig } from "../api.ts";
+import type { User, SiteConfig } from "../types.ts";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   config: SiteConfig;
-  login: (username: string, password: string) => Promise<{ requiresTwoFactor?: boolean; methods?: string[] }>;
+  login: (
+    username: string,
+    password: string,
+  ) => Promise<{ requiresTwoFactor?: boolean; methods?: string[] }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const DEFAULT_CONFIG: SiteConfig = { siteName: 'KRNL Drive', allowRegistration: false, siteIconUrl: '' };
+const DEFAULT_CONFIG: SiteConfig = {
+  siteName: "KRNL Drive",
+  allowRegistration: false,
+  siteIconUrl: "",
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -23,15 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const [meRes, cfgRes] = await Promise.all([
-        authApi.me(),
-        getConfig(),
-      ]);
+      const [meRes, cfgRes] = await Promise.all([authApi.me(), getConfig()]);
       if (meRes.user) {
         setUser(meRes.user);
       } else {
         // Try guest auto-login when no active session
-        const guestRes = await authApi.guestLogin().catch(() => ({ user: null }));
+        const guestRes = await authApi
+          .guestLogin()
+          .catch(() => ({ user: null }));
         setUser(guestRes.user);
       }
       setConfig(cfgRes);
@@ -42,7 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   const login = async (username: string, password: string) => {
     const res = await authApi.login(username, password);
@@ -56,7 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, config, login, logout, refresh }}>
+    <AuthContext.Provider
+      value={{ user, loading, config, login, logout, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -64,6 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }

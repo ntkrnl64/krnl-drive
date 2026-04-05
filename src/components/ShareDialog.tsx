@@ -1,85 +1,109 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
-  Dialog, DialogSurface, DialogTitle, DialogBody, DialogActions, DialogContent,
-  Button, Field, Input, Spinner, Text, Badge, Tooltip, Divider,
-  DataGrid, DataGridBody, DataGridRow, DataGridCell, DataGridHeader, DataGridHeaderCell,
-  createTableColumn, TableCellLayout, makeStyles
-} from '@fluentui/react-components';
-import type { TableColumnDefinition } from '@fluentui/react-components';
+  Dialog,
+  DialogSurface,
+  DialogTitle,
+  DialogBody,
+  DialogActions,
+  DialogContent,
+  Button,
+  Field,
+  Input,
+  Spinner,
+  Text,
+  Badge,
+  Tooltip,
+  Divider,
+  DataGrid,
+  DataGridBody,
+  DataGridRow,
+  DataGridCell,
+  DataGridHeader,
+  DataGridHeaderCell,
+  createTableColumn,
+  TableCellLayout,
+  makeStyles,
+} from "@fluentui/react-components";
+import type { TableColumnDefinition } from "@fluentui/react-components";
 import {
-  CopyRegular, DeleteRegular, LinkRegular, ArrowDownloadRegular, CheckmarkRegular, AddRegular,
-} from '@fluentui/react-icons';
-import { sharesApi, adminApi } from '../api.ts';
-import type { Share, FileItem } from '../types.ts';
-import { useAuth } from '../contexts/AuthContext.tsx';
+  CopyRegular,
+  DeleteRegular,
+  LinkRegular,
+  ArrowDownloadRegular,
+  CheckmarkRegular,
+  AddRegular,
+} from "@fluentui/react-icons";
+import { sharesApi, adminApi } from "../api.ts";
+import type { Share, FileItem } from "../types.ts";
+import { useAuth } from "../contexts/AuthContext.tsx";
 
 const useStyles = makeStyles({
   dialogSurface: {
-    maxWidth: '700px',
-    width: '90vw',
+    maxWidth: "700px",
+    width: "90vw",
   },
   createSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    marginBottom: '16px',
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    marginBottom: "16px",
   },
   formGroup: {
-    display: 'flex',
-    gap: '12px',
-    flexWrap: 'wrap',
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap",
   },
   field: {
     flexGrow: 1,
-    minWidth: '140px',
+    minWidth: "140px",
   },
   createButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   existingSection: {
-    marginTop: '16px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
+    marginTop: "16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
   },
   loadingContainer: {
-    textAlign: 'center',
-    paddingTop: '24px',
-    paddingBottom: '24px',
+    textAlign: "center",
+    paddingTop: "24px",
+    paddingBottom: "24px",
   },
   emptyText: {
-    color: 'var(--colorNeutralForeground3)',
-    display: 'block',
-    marginTop: '8px',
+    color: "var(--colorNeutralForeground3)",
+    display: "block",
+    marginTop: "8px",
   },
   dataGrid: {
-    marginTop: '8px',
+    marginTop: "8px",
   },
   linksContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
   },
   linkRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
   },
   linkIcon: {
-    fontSize: '12px',
-    color: 'var(--colorBrandForeground1)',
+    fontSize: "12px",
+    color: "var(--colorBrandForeground1)",
   },
   downloadIcon: {
-    fontSize: '12px',
-    color: 'var(--colorNeutralForeground3)',
+    fontSize: "12px",
+    color: "var(--colorNeutralForeground3)",
   },
   linkText: {
-    maxWidth: '160px',
+    maxWidth: "160px",
   },
   downloadText: {
-    maxWidth: '160px',
-    color: 'var(--colorNeutralForeground3)',
-  }
+    maxWidth: "160px",
+    color: "var(--colorNeutralForeground3)",
+  },
 });
 
 interface ShareDialogProps {
@@ -87,7 +111,6 @@ interface ShareDialogProps {
   open: boolean;
   onClose: () => void;
 }
-
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -98,7 +121,7 @@ function CopyButton({ text }: { text: string }) {
     });
   };
   return (
-    <Tooltip content={copied ? 'Copied!' : 'Copy'} relationship="label">
+    <Tooltip content={copied ? "Copied!" : "Copy"} relationship="label">
       <Button
         appearance="subtle"
         size="small"
@@ -118,11 +141,11 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
   const [settings, setSettings] = useState<Record<string, string>>({});
 
   // Create form state
-  const [customTitle, setCustomTitle] = useState('');
-  const [customDescription, setCustomDescription] = useState('');
-  const [expiresIn, setExpiresIn] = useState('168'); // hours
-  const [maxViews, setMaxViews] = useState('0');
-  const [maxDownloads, setMaxDownloads] = useState('0');
+  const [customTitle, setCustomTitle] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
+  const [expiresIn, setExpiresIn] = useState("168"); // hours
+  const [maxViews, setMaxViews] = useState("0");
+  const [maxDownloads, setMaxDownloads] = useState("0");
 
   const load = useCallback(async () => {
     if (!file) return;
@@ -130,13 +153,15 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
     try {
       const [sharesRes, settingsRes] = await Promise.all([
         sharesApi.list(file.id),
-        adminApi.getSettings().catch(() => ({ settings: {} as Record<string, string> })),
+        adminApi
+          .getSettings()
+          .catch(() => ({ settings: {} as Record<string, string> })),
       ]);
       setShares(sharesRes.shares);
       setSettings(settingsRes.settings);
-      setExpiresIn(settingsRes.settings.default_share_expiry_hours ?? '168');
-      setMaxViews(settingsRes.settings.default_max_views ?? '0');
-      setMaxDownloads(settingsRes.settings.default_max_downloads ?? '0');
+      setExpiresIn(settingsRes.settings.default_share_expiry_hours ?? "168");
+      setMaxViews(settingsRes.settings.default_max_views ?? "0");
+      setMaxDownloads(settingsRes.settings.default_max_downloads ?? "0");
     } finally {
       setLoading(false);
     }
@@ -150,7 +175,8 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
     if (!file) return;
     setCreating(true);
     try {
-      const expiresInSec = parseInt(expiresIn) > 0 ? parseInt(expiresIn) * 3600 : null;
+      const expiresInSec =
+        parseInt(expiresIn) > 0 ? parseInt(expiresIn) * 3600 : null;
       const mv = parseInt(maxViews) || null;
       const md = parseInt(maxDownloads) || null;
       await sharesApi.create(file.id, {
@@ -160,8 +186,8 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
         maxViews: mv,
         maxDownloads: md,
       });
-      setCustomTitle('');
-      setCustomDescription('');
+      setCustomTitle("");
+      setCustomDescription("");
       await load();
     } catch (e) {
       console.error(e);
@@ -172,10 +198,11 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
 
   const handleDelete = async (id: string) => {
     await sharesApi.delete(id);
-    setShares(prev => prev.filter(s => s.id !== id));
+    setShares((prev) => prev.filter((s) => s.id !== id));
   };
 
-  const shareUrl = (token: string) => `${window.location.origin}/share/${token}`;
+  const shareUrl = (token: string) =>
+    `${window.location.origin}/share/${token}`;
   const downloadUrl = (token: string) => `/api/share/${token}/download`;
 
   const isExpired = (share: Share) =>
@@ -183,29 +210,38 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
 
   const isLimitReached = (share: Share) =>
     (share.max_views !== null && share.view_count >= share.max_views) ||
-    (share.max_downloads !== null && share.download_count >= share.max_downloads);
+    (share.max_downloads !== null &&
+      share.download_count >= share.max_downloads);
 
   const columns: TableColumnDefinition<Share>[] = [
     createTableColumn<Share>({
-      columnId: 'status',
-      renderHeaderCell: () => 'Status',
+      columnId: "status",
+      renderHeaderCell: () => "Status",
       renderCell: (share) => (
         <TableCellLayout>
-          {isExpired(share) || isLimitReached(share)
-            ? <Badge color="danger" size="small">Expired</Badge>
-            : <Badge color="success" size="small">Active</Badge>}
+          {isExpired(share) || isLimitReached(share) ? (
+            <Badge color="danger" size="small">
+              Expired
+            </Badge>
+          ) : (
+            <Badge color="success" size="small">
+              Active
+            </Badge>
+          )}
         </TableCellLayout>
       ),
     }),
     createTableColumn<Share>({
-      columnId: 'links',
-      renderHeaderCell: () => 'Links',
+      columnId: "links",
+      renderHeaderCell: () => "Links",
       renderCell: (share) => (
         <TableCellLayout>
           <div className={styles.linksContainer}>
             <div className={styles.linkRow}>
               <LinkRegular className={styles.linkIcon} />
-              <Text size={100} truncate className={styles.linkText}>{shareUrl(share.token)}</Text>
+              <Text size={100} truncate className={styles.linkText}>
+                {shareUrl(share.token)}
+              </Text>
               <CopyButton text={shareUrl(share.token)} />
             </div>
             <div className={styles.linkRow}>
@@ -213,38 +249,44 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
               <Text size={100} truncate className={styles.downloadText}>
                 Direct download
               </Text>
-              <CopyButton text={`${window.location.origin}${downloadUrl(share.token)}`} />
+              <CopyButton
+                text={`${window.location.origin}${downloadUrl(share.token)}`}
+              />
             </div>
           </div>
         </TableCellLayout>
       ),
     }),
     createTableColumn<Share>({
-      columnId: 'stats',
-      renderHeaderCell: () => 'Views / Downloads',
+      columnId: "stats",
+      renderHeaderCell: () => "Views / Downloads",
       renderCell: (share) => (
         <TableCellLayout>
           <Text size={200}>
-            {share.view_count}{share.max_views !== null ? `/${share.max_views}` : ''} ·{' '}
-            {share.download_count}{share.max_downloads !== null ? `/${share.max_downloads}` : ''}
+            {share.view_count}
+            {share.max_views !== null ? `/${share.max_views}` : ""} ·{" "}
+            {share.download_count}
+            {share.max_downloads !== null ? `/${share.max_downloads}` : ""}
           </Text>
         </TableCellLayout>
       ),
     }),
     createTableColumn<Share>({
-      columnId: 'expires',
-      renderHeaderCell: () => 'Expires',
+      columnId: "expires",
+      renderHeaderCell: () => "Expires",
       renderCell: (share) => (
         <TableCellLayout>
           <Text size={200}>
-            {share.expires_at ? new Date(share.expires_at).toLocaleDateString() : 'Never'}
+            {share.expires_at
+              ? new Date(share.expires_at).toLocaleDateString()
+              : "Never"}
           </Text>
         </TableCellLayout>
       ),
     }),
     createTableColumn<Share>({
-      columnId: 'actions',
-      renderHeaderCell: () => '',
+      columnId: "actions",
+      renderHeaderCell: () => "",
       renderCell: (share) => (
         <TableCellLayout>
           <Button
@@ -265,49 +307,66 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
           <DialogTitle>Share "{file?.name}"</DialogTitle>
           <DialogContent>
             {/* Create new share */}
-            {user?.role !== 'guest' && (
+            {user?.role !== "guest" && (
               <div className={styles.createSection}>
                 <Text weight="semibold">Create new share link</Text>
                 <div className={styles.formGroup}>
-                  <Field label="Custom Title (optional)" className={styles.field} style={{ minWidth: '100%' }}>
+                  <Field
+                    label="Custom Title (optional)"
+                    className={styles.field}
+                    style={{ minWidth: "100%" }}
+                  >
                     <Input
                       value={customTitle}
                       onChange={(_, d) => setCustomTitle(d.value)}
                       placeholder="Leave blank to use defaults or file name"
                     />
                   </Field>
-                  <Field label="Custom Description (optional)" className={styles.field} style={{ minWidth: '100%' }}>
+                  <Field
+                    label="Custom Description (optional)"
+                    className={styles.field}
+                    style={{ minWidth: "100%" }}
+                  >
                     <Input
                       value={customDescription}
                       onChange={(_, d) => setCustomDescription(d.value)}
                       placeholder="Leave blank to use defaults"
                     />
                   </Field>
-                  <Field label="Expires in (hours, 0=never)" className={styles.field}>
+                  <Field
+                    label="Expires in (hours, 0=never)"
+                    className={styles.field}
+                  >
                     <Input
                       type="number"
                       min="0"
                       value={expiresIn}
                       onChange={(_, d) => setExpiresIn(d.value)}
-                      placeholder={settings.default_share_expiry_hours ?? '168'}
+                      placeholder={settings.default_share_expiry_hours ?? "168"}
                     />
                   </Field>
-                  <Field label="Max views (0=unlimited)" className={styles.field}>
+                  <Field
+                    label="Max views (0=unlimited)"
+                    className={styles.field}
+                  >
                     <Input
                       type="number"
                       min="0"
                       value={maxViews}
                       onChange={(_, d) => setMaxViews(d.value)}
-                      placeholder={settings.default_max_views ?? '0'}
+                      placeholder={settings.default_max_views ?? "0"}
                     />
                   </Field>
-                  <Field label="Max downloads (0=unlimited)" className={styles.field}>
+                  <Field
+                    label="Max downloads (0=unlimited)"
+                    className={styles.field}
+                  >
                     <Input
                       type="number"
                       min="0"
                       value={maxDownloads}
                       onChange={(_, d) => setMaxDownloads(d.value)}
-                      placeholder={settings.default_max_downloads ?? '0'}
+                      placeholder={settings.default_max_downloads ?? "0"}
                     />
                   </Field>
                 </div>
@@ -323,18 +382,19 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
               </div>
             )}
 
-
             <Divider />
 
             {/* Existing shares */}
             <div className={styles.existingSection}>
-              <Text weight="semibold">Existing share links ({shares.length})</Text>
+              <Text weight="semibold">
+                Existing share links ({shares.length})
+              </Text>
               {loading ? (
-                <div className={styles.loadingContainer}><Spinner /></div>
+                <div className={styles.loadingContainer}>
+                  <Spinner />
+                </div>
               ) : shares.length === 0 ? (
-                <Text className={styles.emptyText}>
-                  No share links yet
-                </Text>
+                <Text className={styles.emptyText}>No share links yet</Text>
               ) : (
                 <DataGrid
                   items={shares}
@@ -343,13 +403,19 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
                 >
                   <DataGridHeader>
                     <DataGridRow>
-                      {({ renderHeaderCell }) => <DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>}
+                      {({ renderHeaderCell }) => (
+                        <DataGridHeaderCell>
+                          {renderHeaderCell()}
+                        </DataGridHeaderCell>
+                      )}
                     </DataGridRow>
                   </DataGridHeader>
                   <DataGridBody<Share>>
                     {({ item, rowId }) => (
                       <DataGridRow<Share> key={rowId}>
-                        {({ renderCell }) => <DataGridCell>{renderCell(item)}</DataGridCell>}
+                        {({ renderCell }) => (
+                          <DataGridCell>{renderCell(item)}</DataGridCell>
+                        )}
                       </DataGridRow>
                     )}
                   </DataGridBody>

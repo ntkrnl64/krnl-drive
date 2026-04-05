@@ -1,63 +1,89 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
-  DataGrid, DataGridBody, DataGridRow, DataGridCell, DataGridHeader, DataGridHeaderCell,
-  TableCellLayout, createTableColumn,
-  Button, Menu, MenuTrigger, MenuPopover, MenuList, MenuItem, MenuDivider,
-  Checkbox, Text, Tooltip, makeStyles
-} from '@fluentui/react-components';
-import type { TableColumnDefinition } from '@fluentui/react-components';
+  DataGrid,
+  DataGridBody,
+  DataGridRow,
+  DataGridCell,
+  DataGridHeader,
+  DataGridHeaderCell,
+  TableCellLayout,
+  createTableColumn,
+  Button,
+  Menu,
+  MenuTrigger,
+  MenuPopover,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+  Checkbox,
+  Text,
+  Tooltip,
+  makeStyles,
+} from "@fluentui/react-components";
+import type { TableColumnDefinition } from "@fluentui/react-components";
 import {
-  FolderRegular, DocumentRegular, MoreHorizontalRegular,
-  ArrowDownloadRegular, ShareAndroidRegular, EditRegular, DeleteRegular,
-  FolderOpenRegular, ArrowMoveRegular, DocumentCopyRegular,
-  ImageRegular, VideoRegular, MusicNote2Regular, DocumentPdfRegular, FolderZipRegular,
+  FolderRegular,
+  DocumentRegular,
+  MoreHorizontalRegular,
+  ArrowDownloadRegular,
+  ShareAndroidRegular,
+  EditRegular,
+  DeleteRegular,
+  FolderOpenRegular,
+  ArrowMoveRegular,
+  DocumentCopyRegular,
+  ImageRegular,
+  VideoRegular,
+  MusicNote2Regular,
+  DocumentPdfRegular,
+  FolderZipRegular,
   CodeRegular,
-} from '@fluentui/react-icons';
-import { formatBytes, formatDate, filesApi } from '../api.ts';
-import type { FileItem } from '../types.ts';
-import type { User } from '../types.ts';
+} from "@fluentui/react-icons";
+import { formatBytes, formatDate, filesApi } from "../api.ts";
+import type { FileItem } from "../types.ts";
+import type { User } from "../types.ts";
 
 const useStyles = makeStyles({
   emptyState: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '64px 24px',
-    height: '100%',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "64px 24px",
+    height: "100%",
   },
   emptyIcon: {
-    fontSize: '48px',
-    color: 'var(--colorNeutralForeground4)',
-    marginBottom: '16px',
+    fontSize: "48px",
+    color: "var(--colorNeutralForeground4)",
+    marginBottom: "16px",
   },
   emptyText: {
-    color: 'var(--colorNeutralForeground3)',
+    color: "var(--colorNeutralForeground3)",
   },
   actionsContainer: {
-    display: 'flex',
-    gap: '4px',
-    justifyContent: 'flex-end',
+    display: "flex",
+    gap: "4px",
+    justifyContent: "flex-end",
   },
   fileNameCellFolder: {
-    cursor: 'pointer',
+    cursor: "pointer",
   },
   folderIcon: {
-    fontSize: '20px',
-    color: 'var(--colorBrandForeground1)',
+    fontSize: "20px",
+    color: "var(--colorBrandForeground1)",
   },
   documentIcon: {
-    fontSize: '20px',
-    color: 'var(--colorNeutralForeground3)',
+    fontSize: "20px",
+    color: "var(--colorNeutralForeground3)",
   },
   folderText: {
-    color: 'var(--colorBrandForeground1)',
+    color: "var(--colorBrandForeground1)",
   },
   metaText: {
-    color: 'var(--colorNeutralForeground3)',
+    color: "var(--colorNeutralForeground3)",
   },
   dataGridRowSelected: {
-    backgroundColor: 'var(--colorNeutralBackground1Selected)',
+    backgroundColor: "var(--colorNeutralBackground1Selected)",
   },
 });
 
@@ -74,42 +100,62 @@ interface FileListProps {
   onSelectionChange: (id: string, checked: boolean) => void;
 }
 
-function FileIcon({ item, styles }: { item: FileItem, styles: ReturnType<typeof useStyles> }) {
-  if (item.type === 'folder') return <FolderRegular className={styles.folderIcon} />;
-  const mime = item.mime_type ?? '';
-  if (mime.startsWith('image/')) return <ImageRegular className={styles.documentIcon} />;
-  if (mime.startsWith('video/')) return <VideoRegular className={styles.documentIcon} />;
-  if (mime.startsWith('audio/')) return <MusicNote2Regular className={styles.documentIcon} />;
-  if (mime.includes('pdf')) return <DocumentPdfRegular className={styles.documentIcon} />;
-  if (mime.includes('zip') || mime.includes('tar') || mime.includes('rar')) return <FolderZipRegular className={styles.documentIcon} />;
+function FileIcon({
+  item,
+  styles,
+}: {
+  item: FileItem;
+  styles: ReturnType<typeof useStyles>;
+}) {
+  if (item.type === "folder")
+    return <FolderRegular className={styles.folderIcon} />;
+  const mime = item.mime_type ?? "";
+  if (mime.startsWith("image/"))
+    return <ImageRegular className={styles.documentIcon} />;
+  if (mime.startsWith("video/"))
+    return <VideoRegular className={styles.documentIcon} />;
+  if (mime.startsWith("audio/"))
+    return <MusicNote2Regular className={styles.documentIcon} />;
+  if (mime.includes("pdf"))
+    return <DocumentPdfRegular className={styles.documentIcon} />;
+  if (mime.includes("zip") || mime.includes("tar") || mime.includes("rar"))
+    return <FolderZipRegular className={styles.documentIcon} />;
   return <DocumentRegular className={styles.documentIcon} />;
 }
 
 export default function FileList({
-  items, currentUser, onNavigate, onDelete, onRename, onShare, onMove, onCopy,
-  selected, onSelectionChange,
+  items,
+  currentUser,
+  onNavigate,
+  onDelete,
+  onRename,
+  onShare,
+  onMove,
+  onCopy,
+  selected,
+  onSelectionChange,
 }: FileListProps) {
   const styles = useStyles();
   const [shiftHeld, setShiftHeld] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => setShiftHeld(e.shiftKey);
-    window.addEventListener('keydown', onKey);
-    window.addEventListener('keyup', onKey);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKey);
     return () => {
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('keyup', onKey);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKey);
     };
   }, []);
 
   const canModify = (item: FileItem) =>
-    currentUser.role === 'admin' || item.owner_id === currentUser.id;
+    currentUser.role === "admin" || item.owner_id === currentUser.id;
 
-  const isGuest = currentUser.role === 'guest';
+  const isGuest = currentUser.role === "guest";
 
   const columns: TableColumnDefinition<FileItem>[] = [
     createTableColumn<FileItem>({
-      columnId: 'select',
+      columnId: "select",
       renderHeaderCell: () => null,
       renderCell: (item) => (
         <TableCellLayout>
@@ -121,21 +167,23 @@ export default function FileList({
       ),
     }),
     createTableColumn<FileItem>({
-      columnId: 'name',
+      columnId: "name",
       compare: (a, b) => {
-        if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+        if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
         return a.name.localeCompare(b.name);
       },
-      renderHeaderCell: () => 'Name',
+      renderHeaderCell: () => "Name",
       renderCell: (item) => (
         <TableCellLayout
           media={<FileIcon item={item} styles={styles} />}
-          className={item.type === 'folder' ? styles.fileNameCellFolder : undefined}
-          onClick={() => item.type === 'folder' && onNavigate(item)}
+          className={
+            item.type === "folder" ? styles.fileNameCellFolder : undefined
+          }
+          onClick={() => item.type === "folder" && onNavigate(item)}
         >
           <Text
-            weight={item.type === 'folder' ? 'semibold' : 'regular'}
-            className={item.type === 'folder' ? styles.folderText : undefined}
+            weight={item.type === "folder" ? "semibold" : "regular"}
+            className={item.type === "folder" ? styles.folderText : undefined}
           >
             {item.name}
           </Text>
@@ -143,21 +191,21 @@ export default function FileList({
       ),
     }),
     createTableColumn<FileItem>({
-      columnId: 'size',
+      columnId: "size",
       compare: (a, b) => a.size - b.size,
-      renderHeaderCell: () => 'Size',
+      renderHeaderCell: () => "Size",
       renderCell: (item) => (
         <TableCellLayout>
           <Text size={200} className={styles.metaText}>
-            {item.type === 'folder' ? '—' : formatBytes(item.size)}
+            {item.type === "folder" ? "—" : formatBytes(item.size)}
           </Text>
         </TableCellLayout>
       ),
     }),
     createTableColumn<FileItem>({
-      columnId: 'modified',
+      columnId: "modified",
       compare: (a, b) => a.updated_at - b.updated_at,
-      renderHeaderCell: () => 'Modified',
+      renderHeaderCell: () => "Modified",
       renderCell: (item) => (
         <TableCellLayout>
           <Text size={200} className={styles.metaText}>
@@ -167,15 +215,23 @@ export default function FileList({
       ),
     }),
     createTableColumn<FileItem>({
-      columnId: 'actions',
-      renderHeaderCell: () => '',
+      columnId: "actions",
+      renderHeaderCell: () => "",
       renderCell: (item) => (
         <TableCellLayout>
           <div className={styles.actionsContainer}>
-            {item.type === 'file' && (
+            {item.type === "file" && (
               <Tooltip content="Download" relationship="label">
-                <a href={filesApi.downloadUrl(item.id)} download={item.name} style={{ display: 'inline-flex' }}>
-                  <Button appearance="subtle" size="small" icon={<ArrowDownloadRegular />} />
+                <a
+                  href={filesApi.downloadUrl(item.id)}
+                  download={item.name}
+                  style={{ display: "inline-flex" }}
+                >
+                  <Button
+                    appearance="subtle"
+                    size="small"
+                    icon={<ArrowDownloadRegular />}
+                  />
                 </a>
               </Tooltip>
             )}
@@ -193,62 +249,109 @@ export default function FileList({
             {shiftHeld && canModify(item) && !isGuest && (
               <>
                 <Tooltip content="Copy" relationship="label">
-                  <Button appearance="subtle" size="small" icon={<DocumentCopyRegular />} onClick={() => onCopy(item)} />
+                  <Button
+                    appearance="subtle"
+                    size="small"
+                    icon={<DocumentCopyRegular />}
+                    onClick={() => onCopy(item)}
+                  />
                 </Tooltip>
                 <Tooltip content="Rename" relationship="label">
-                  <Button appearance="subtle" size="small" icon={<EditRegular />} onClick={() => onRename(item)} />
+                  <Button
+                    appearance="subtle"
+                    size="small"
+                    icon={<EditRegular />}
+                    onClick={() => onRename(item)}
+                  />
                 </Tooltip>
                 <Tooltip content="Move" relationship="label">
-                  <Button appearance="subtle" size="small" icon={<ArrowMoveRegular />} onClick={() => onMove(item)} />
+                  <Button
+                    appearance="subtle"
+                    size="small"
+                    icon={<ArrowMoveRegular />}
+                    onClick={() => onMove(item)}
+                  />
                 </Tooltip>
                 <Tooltip content="Delete" relationship="label">
-                  <Button appearance="subtle" size="small" icon={<DeleteRegular />} onClick={() => onDelete(item)} />
+                  <Button
+                    appearance="subtle"
+                    size="small"
+                    icon={<DeleteRegular />}
+                    onClick={() => onDelete(item)}
+                  />
                 </Tooltip>
               </>
             )}
             <Menu>
               <MenuTrigger>
-                <Button appearance="subtle" size="small" icon={<MoreHorizontalRegular />} />
+                <Button
+                  appearance="subtle"
+                  size="small"
+                  icon={<MoreHorizontalRegular />}
+                />
               </MenuTrigger>
               <MenuPopover>
                 <MenuList>
-                  {item.type === 'folder' && (
-                    <MenuItem icon={<FolderOpenRegular />} onClick={() => onNavigate(item)}>
+                  {item.type === "folder" && (
+                    <MenuItem
+                      icon={<FolderOpenRegular />}
+                      onClick={() => onNavigate(item)}
+                    >
                       Open
                     </MenuItem>
                   )}
-                  {item.type === 'folder' && (
-                    <MenuItem icon={<CodeRegular />} onClick={() => navigator.clipboard.writeText(item.id)}>
+                  {item.type === "folder" && (
+                    <MenuItem
+                      icon={<CodeRegular />}
+                      onClick={() => navigator.clipboard.writeText(item.id)}
+                    >
                       Copy Folder ID
                     </MenuItem>
                   )}
-                  {item.type === 'file' && (
+                  {item.type === "file" && (
                     <MenuItem
                       icon={<ArrowDownloadRegular />}
-                      onClick={() => { window.location.href = filesApi.downloadUrl(item.id); }}
+                      onClick={() => {
+                        window.location.href = filesApi.downloadUrl(item.id);
+                      }}
                     >
                       Download
                     </MenuItem>
                   )}
                   {!isGuest && (
-                    <MenuItem icon={<ShareAndroidRegular />} onClick={() => onShare(item)}>
+                    <MenuItem
+                      icon={<ShareAndroidRegular />}
+                      onClick={() => onShare(item)}
+                    >
                       Share
                     </MenuItem>
                   )}
                   {canModify(item) && !isGuest && (
                     <>
                       <MenuDivider />
-                      <MenuItem icon={<DocumentCopyRegular />} onClick={() => onCopy(item)}>
+                      <MenuItem
+                        icon={<DocumentCopyRegular />}
+                        onClick={() => onCopy(item)}
+                      >
                         Copy
                       </MenuItem>
-                      <MenuItem icon={<EditRegular />} onClick={() => onRename(item)}>
+                      <MenuItem
+                        icon={<EditRegular />}
+                        onClick={() => onRename(item)}
+                      >
                         Rename
                       </MenuItem>
-                      <MenuItem icon={<ArrowMoveRegular />} onClick={() => onMove(item)}>
+                      <MenuItem
+                        icon={<ArrowMoveRegular />}
+                        onClick={() => onMove(item)}
+                      >
                         Move
                       </MenuItem>
                       <MenuDivider />
-                      <MenuItem icon={<DeleteRegular />} onClick={() => onDelete(item)}>
+                      <MenuItem
+                        icon={<DeleteRegular />}
+                        onClick={() => onDelete(item)}
+                      >
                         Delete
                       </MenuItem>
                     </>
@@ -266,7 +369,9 @@ export default function FileList({
     return (
       <div className={styles.emptyState}>
         <FolderOpenRegular className={styles.emptyIcon} />
-        <Text block className={styles.emptyText}>This folder is empty</Text>
+        <Text block className={styles.emptyText}>
+          This folder is empty
+        </Text>
       </div>
     );
   }
@@ -276,7 +381,7 @@ export default function FileList({
       items={items}
       columns={columns}
       sortable
-      defaultSortState={{ sortColumn: 'name', sortDirection: 'ascending' }}
+      defaultSortState={{ sortColumn: "name", sortDirection: "ascending" }}
     >
       <DataGridHeader>
         <DataGridRow>
@@ -291,45 +396,69 @@ export default function FileList({
             <MenuTrigger disableButtonEnhancement>
               <DataGridRow<FileItem>
                 key={rowId}
-                className={selected.has(item.id) ? styles.dataGridRowSelected : undefined}
+                className={
+                  selected.has(item.id) ? styles.dataGridRowSelected : undefined
+                }
               >
-                {({ renderCell }) => <DataGridCell>{renderCell(item)}</DataGridCell>}
+                {({ renderCell }) => (
+                  <DataGridCell>{renderCell(item)}</DataGridCell>
+                )}
               </DataGridRow>
             </MenuTrigger>
             <MenuPopover>
               <MenuList>
-                {item.type === 'folder' && (
-                  <MenuItem icon={<FolderOpenRegular />} onClick={() => onNavigate(item)}>
+                {item.type === "folder" && (
+                  <MenuItem
+                    icon={<FolderOpenRegular />}
+                    onClick={() => onNavigate(item)}
+                  >
                     Open
                   </MenuItem>
                 )}
-                <MenuItem icon={<CodeRegular />} onClick={() => void navigator.clipboard.writeText(item.id)}>
-                  {item.type === 'folder' ? 'Copy Folder ID' : 'Copy File ID'}
+                <MenuItem
+                  icon={<CodeRegular />}
+                  onClick={() => void navigator.clipboard.writeText(item.id)}
+                >
+                  {item.type === "folder" ? "Copy Folder ID" : "Copy File ID"}
                 </MenuItem>
-                {item.type === 'file' && (
+                {item.type === "file" && (
                   <MenuItem
                     icon={<ArrowDownloadRegular />}
-                    onClick={() => { window.location.href = filesApi.downloadUrl(item.id); }}
+                    onClick={() => {
+                      window.location.href = filesApi.downloadUrl(item.id);
+                    }}
                   >
                     Download
                   </MenuItem>
                 )}
                 {!isGuest && (
-                  <MenuItem icon={<ShareAndroidRegular />} onClick={() => onShare(item)}>
+                  <MenuItem
+                    icon={<ShareAndroidRegular />}
+                    onClick={() => onShare(item)}
+                  >
                     Share
                   </MenuItem>
                 )}
                 {canModify(item) && !isGuest && (
                   <>
                     <MenuDivider />
-                    <MenuItem icon={<EditRegular />} onClick={() => onRename(item)}>
+                    <MenuItem
+                      icon={<EditRegular />}
+                      onClick={() => onRename(item)}
+                    >
                       Rename
                     </MenuItem>
-                    <MenuItem icon={<ArrowMoveRegular />} onClick={() => onMove(item)}>
+                    <MenuItem
+                      icon={<ArrowMoveRegular />}
+                      onClick={() => onMove(item)}
+                    >
                       Move
                     </MenuItem>
                     <MenuDivider />
-                    <MenuItem icon={<DeleteRegular />} onClick={() => onDelete(item)}>
+                    <MenuItem
+                      icon={<DeleteRegular />}
+                      onClick={() => onDelete(item)}
+                    >
                       Delete
                     </MenuItem>
                   </>

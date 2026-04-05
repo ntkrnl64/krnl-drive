@@ -1,62 +1,93 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
-  Breadcrumb, BreadcrumbItem, BreadcrumbButton, BreadcrumbDivider,
-  Button, Popover, PopoverTrigger, PopoverSurface,
-  Spinner, Toast, useToastController,
-  MessageBar, MessageBarBody, Text,
-  Dialog, DialogSurface, DialogBody, DialogTitle, DialogContent, DialogActions,
-  Menu, MenuTrigger, MenuPopover, MenuList, MenuItem,
-  makeStyles, shorthands,
-} from '@fluentui/react-components';
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbButton,
+  BreadcrumbDivider,
+  Button,
+  Popover,
+  PopoverTrigger,
+  PopoverSurface,
+  Spinner,
+  Toast,
+  useToastController,
+  MessageBar,
+  MessageBarBody,
+  Text,
+  Dialog,
+  DialogSurface,
+  DialogBody,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Menu,
+  MenuTrigger,
+  MenuPopover,
+  MenuList,
+  MenuItem,
+  makeStyles,
+  shorthands,
+} from "@fluentui/react-components";
 import {
-  FolderAddRegular, ArrowUploadRegular, DeleteRegular, ArrowSyncRegular, HomeRegular, CodeRegular
-} from '@fluentui/react-icons';
-import { filesApi } from '../api.ts';
-import { useAuth } from '../contexts/AuthContext.tsx';
-import FileList from '../components/FileList.tsx';
-import UploadZone from '../components/UploadZone.tsx';
-import ShareDialog from '../components/ShareDialog.tsx';
-import { CreateFolderDialog, RenameDialog, DeleteDialog, MoveDialog, CopyDialog } from '../components/Dialogs.tsx';
-import type { FileItem } from '../types.ts';
+  FolderAddRegular,
+  ArrowUploadRegular,
+  DeleteRegular,
+  ArrowSyncRegular,
+  HomeRegular,
+  CodeRegular,
+} from "@fluentui/react-icons";
+import { filesApi } from "../api.ts";
+import { useAuth } from "../contexts/AuthContext.tsx";
+import FileList from "../components/FileList.tsx";
+import UploadZone from "../components/UploadZone.tsx";
+import ShareDialog from "../components/ShareDialog.tsx";
+import {
+  CreateFolderDialog,
+  RenameDialog,
+  DeleteDialog,
+  MoveDialog,
+  CopyDialog,
+} from "../components/Dialogs.tsx";
+import type { FileItem } from "../types.ts";
 
 const useStyles = makeStyles({
   root: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    backgroundColor: 'var(--colorNeutralBackground1)',
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "var(--colorNeutralBackground1)",
   },
   header: {
-    padding: '6px 8px 6px 16px',
-    ...shorthands.borderBottom('1px', 'solid', 'var(--colorNeutralStroke2)'),
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    backgroundColor: 'var(--colorNeutralBackground2)',
-    minHeight: '44px',
+    padding: "6px 8px 6px 16px",
+    ...shorthands.borderBottom("1px", "solid", "var(--colorNeutralStroke2)"),
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    backgroundColor: "var(--colorNeutralBackground2)",
+    minHeight: "44px",
   },
   headerBreadcrumb: {
     flexGrow: 1,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   headerActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '2px',
+    display: "flex",
+    alignItems: "center",
+    gap: "2px",
     flexShrink: 0,
   },
-listContainer: {
+  listContainer: {
     flexGrow: 1,
-    overflowY: 'auto',
-    overflowX: 'auto',
-    padding: '0 8px',
+    overflowY: "auto",
+    overflowX: "auto",
+    padding: "0 8px",
   },
   loadingContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '200px',
-  }
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "200px",
+  },
 });
 
 interface BreadcrumbEntry {
@@ -70,7 +101,9 @@ export default function DrivePage() {
   const { dispatchToast } = useToastController();
 
   const [currentId, setCurrentId] = useState<string | null>(null);
-  const [breadcrumb, setBreadcrumb] = useState<BreadcrumbEntry[]>([{ id: null, name: 'Home' }]);
+  const [breadcrumb, setBreadcrumb] = useState<BreadcrumbEntry[]>([
+    { id: null, name: "Home" },
+  ]);
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -84,10 +117,14 @@ export default function DrivePage() {
   const [copyItem, setCopyItem] = useState<FileItem | null>(null);
   const [deleteBatchOpen, setDeleteBatchOpen] = useState(false);
 
-  const toast = (msg: string, intent: 'success' | 'error' = 'success') =>
+  const toast = (msg: string, intent: "success" | "error" = "success") =>
     dispatchToast(
-      <Toast><MessageBar intent={intent}><MessageBarBody>{msg}</MessageBarBody></MessageBar></Toast>,
-      { intent }
+      <Toast>
+        <MessageBar intent={intent}>
+          <MessageBarBody>{msg}</MessageBarBody>
+        </MessageBar>
+      </Toast>,
+      { intent },
     );
 
   const load = useCallback(async () => {
@@ -97,25 +134,27 @@ export default function DrivePage() {
       setItems(res.items);
       setSelected(new Set());
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed to load files', 'error');
+      toast(e instanceof Error ? e.message : "Failed to load files", "error");
     } finally {
       setLoading(false);
     }
-  }, [currentId]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const navigate = (folder: FileItem) => {
     setCurrentId(folder.id);
-    setBreadcrumb(prev => [...prev, { id: folder.id, name: folder.name }]);
+    setBreadcrumb((prev) => [...prev, { id: folder.id, name: folder.name }]);
     setSelected(new Set());
   };
 
   const navigateTo = (entry: BreadcrumbEntry) => {
-    const idx = breadcrumb.findIndex(b => b.id === entry.id);
+    const idx = breadcrumb.findIndex((b) => b.id === entry.id);
     if (idx >= 0) {
       setCurrentId(entry.id);
-      setBreadcrumb(prev => prev.slice(0, idx + 1));
+      setBreadcrumb((prev) => prev.slice(0, idx + 1));
       setSelected(new Set());
     }
   };
@@ -129,14 +168,14 @@ export default function DrivePage() {
   const handleRename = async (id: string, name: string) => {
     await filesApi.rename(id, name);
     await load();
-    toast('Renamed successfully');
+    toast("Renamed successfully");
   };
 
   const handleDelete = async (id: string) => {
-    const item = items.find(i => i.id === id);
+    const item = items.find((i) => i.id === id);
     await filesApi.delete(id);
     await load();
-    toast(`"${item?.name ?? 'Item'}" deleted`);
+    toast(`"${item?.name ?? "Item"}" deleted`);
   };
 
   const handleDeleteSelected = async () => {
@@ -153,17 +192,17 @@ export default function DrivePage() {
   const handleMove = async (id: string, parentId: string | null) => {
     await filesApi.move(id, parentId);
     await load();
-    toast('Moved successfully');
+    toast("Moved successfully");
   };
 
   const handleCopy = async (id: string, parentId: string | null) => {
     await filesApi.copy(id, parentId);
     await load();
-    toast('Copied successfully');
+    toast("Copied successfully");
   };
 
   const toggleSelection = (id: string, checked: boolean) => {
-    setSelected(prev => {
+    setSelected((prev) => {
       const next = new Set(prev);
       if (checked) next.add(id);
       else next.delete(id);
@@ -171,17 +210,16 @@ export default function DrivePage() {
     });
   };
 
-  const isGuest = user?.role === 'guest';
+  const isGuest = user?.role === "guest";
 
   return (
     <div className={styles.root}>
-
       {/* Header: breadcrumb + actions */}
       <div className={styles.header}>
         <div className={styles.headerBreadcrumb}>
           <Breadcrumb>
             {breadcrumb.map((entry, idx) => (
-              <span key={entry.id ?? 'root'} style={{ display: 'contents' }}>
+              <span key={entry.id ?? "root"} style={{ display: "contents" }}>
                 {idx > 0 && <BreadcrumbDivider />}
                 <BreadcrumbItem>
                   <BreadcrumbButton
@@ -219,20 +257,32 @@ export default function DrivePage() {
               </Button>
               <Popover positioning="below-end" trapFocus={false}>
                 <PopoverTrigger disableButtonEnhancement>
-                  <Button id="upload-button" appearance="subtle" size="small" icon={<ArrowUploadRegular />}>
+                  <Button
+                    id="upload-button"
+                    appearance="subtle"
+                    size="small"
+                    icon={<ArrowUploadRegular />}
+                  >
                     Upload
                   </Button>
                 </PopoverTrigger>
-                <PopoverSurface style={{ padding: '16px', width: '360px' }}>
-                  <UploadZone parentId={currentId} onUploaded={() => void load()} />
+                <PopoverSurface style={{ padding: "16px", width: "360px" }}>
+                  <UploadZone
+                    parentId={currentId}
+                    onUploaded={() => void load()}
+                  />
                 </PopoverSurface>
               </Popover>
             </>
           )}
-          <Button appearance="subtle" size="small" icon={<ArrowSyncRegular />} onClick={() => void load()} />
+          <Button
+            appearance="subtle"
+            size="small"
+            icon={<ArrowSyncRegular />}
+            onClick={() => void load()}
+          />
         </div>
       </div>
-
 
       {/* File list */}
       <Menu openOnContext>
@@ -247,11 +297,11 @@ export default function DrivePage() {
                 items={items}
                 currentUser={user!}
                 onNavigate={navigate}
-                onDelete={item => setDeleteItem(item)}
-                onRename={item => setRenameItem(item)}
-                onShare={item => setShareItem(item)}
-                onMove={item => setMoveItem(item)}
-                onCopy={item => setCopyItem(item)}
+                onDelete={(item) => setDeleteItem(item)}
+                onRename={(item) => setRenameItem(item)}
+                onShare={(item) => setShareItem(item)}
+                onMove={(item) => setMoveItem(item)}
+                onCopy={(item) => setCopyItem(item)}
                 selected={selected}
                 onSelectionChange={toggleSelection}
               />
@@ -262,16 +312,27 @@ export default function DrivePage() {
           <MenuList>
             {!isGuest && (
               <>
-                <MenuItem icon={<FolderAddRegular />} onClick={() => setCreateFolderOpen(true)}>
+                <MenuItem
+                  icon={<FolderAddRegular />}
+                  onClick={() => setCreateFolderOpen(true)}
+                >
                   New Folder
                 </MenuItem>
-                <MenuItem icon={<ArrowUploadRegular />} onClick={() => document.getElementById('upload-button')?.click()}>
+                <MenuItem
+                  icon={<ArrowUploadRegular />}
+                  onClick={() =>
+                    document.getElementById("upload-button")?.click()
+                  }
+                >
                   Upload
                 </MenuItem>
               </>
             )}
             {currentId && (
-              <MenuItem icon={<CodeRegular />} onClick={() => void navigator.clipboard.writeText(currentId)}>
+              <MenuItem
+                icon={<CodeRegular />}
+                onClick={() => void navigator.clipboard.writeText(currentId)}
+              >
                 Copy Current Folder ID
               </MenuItem>
             )}
@@ -321,17 +382,31 @@ export default function DrivePage() {
       />
 
       {/* Batch delete confirm */}
-      <Dialog open={deleteBatchOpen} onOpenChange={(_, d) => !d.open && setDeleteBatchOpen(false)}>
+      <Dialog
+        open={deleteBatchOpen}
+        onOpenChange={(_, d) => !d.open && setDeleteBatchOpen(false)}
+      >
         <DialogSurface>
           <DialogBody>
             <DialogTitle>Delete {selected.size} item(s)?</DialogTitle>
             <DialogContent>
-              <Text>This will permanently delete the selected items. This cannot be undone.</Text>
+              <Text>
+                This will permanently delete the selected items. This cannot be
+                undone.
+              </Text>
             </DialogContent>
             <DialogActions>
-              <Button appearance="secondary" onClick={() => setDeleteBatchOpen(false)}>Cancel</Button>
               <Button
-                style={{ background: 'var(--colorPaletteRedBackground3)', color: 'white' }}
+                appearance="secondary"
+                onClick={() => setDeleteBatchOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                style={{
+                  background: "var(--colorPaletteRedBackground3)",
+                  color: "white",
+                }}
                 onClick={handleDeleteSelected}
               >
                 Delete all

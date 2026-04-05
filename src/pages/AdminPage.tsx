@@ -1,23 +1,58 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.tsx';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext.tsx";
 import {
-  Title2, Title3, Text, Button, Field, Input, Select, Switch, Card,
-  Badge, Spinner, Tab, TabList,
-  Table, TableHeader, TableRow, TableHeaderCell, TableBody, TableCell, TableCellLayout,
-  Dialog, DialogSurface, DialogTitle, DialogBody, DialogContent, DialogActions,
-  Toast, useToastController,
-  MessageBar, MessageBarBody, Tooltip, makeStyles, shorthands
-} from '@fluentui/react-components';
+  Title2,
+  Title3,
+  Text,
+  Button,
+  Field,
+  Input,
+  Select,
+  Switch,
+  Card,
+  Badge,
+  Spinner,
+  Tab,
+  TabList,
+  Table,
+  TableHeader,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+  TableCellLayout,
+  Dialog,
+  DialogSurface,
+  DialogTitle,
+  DialogBody,
+  DialogContent,
+  DialogActions,
+  Toast,
+  useToastController,
+  MessageBar,
+  MessageBarBody,
+  Tooltip,
+  makeStyles,
+  shorthands,
+} from "@fluentui/react-components";
 import {
-  PersonAddRegular, DeleteRegular, EditRegular,
-  SettingsRegular, PeopleRegular, DocumentRegular, CheckmarkRegular,
-  DatabaseRegular, LinkRegular, ArrowUploadRegular, ArrowRightRegular
-} from '@fluentui/react-icons';
-import { adminApi, formatBytes } from '../api.ts';
-import type { User } from '../types.ts';
+  PersonAddRegular,
+  DeleteRegular,
+  EditRegular,
+  SettingsRegular,
+  PeopleRegular,
+  DocumentRegular,
+  CheckmarkRegular,
+  DatabaseRegular,
+  LinkRegular,
+  ArrowUploadRegular,
+  ArrowRightRegular,
+} from "@fluentui/react-icons";
+import { adminApi, formatBytes } from "../api.ts";
+import type { User } from "../types.ts";
 
-type AdminTab = 'users' | 'settings' | 'stats';
+type AdminTab = "users" | "settings" | "stats";
 
 interface Stats {
   users: number;
@@ -29,67 +64,67 @@ interface Stats {
 
 const useStyles = makeStyles({
   root: {
-    ...shorthands.padding('24px', '16px'),
+    ...shorthands.padding("24px", "16px"),
   },
   title: {
-    marginBottom: '24px',
+    marginBottom: "24px",
   },
   contentContainer: {
-    marginTop: '20px',
+    marginTop: "20px",
   },
   usersHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px',
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "16px",
   },
   settingsContainer: {
-    maxWidth: '600px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
+    maxWidth: "600px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
   },
   cardContent: {
-    ...shorthands.padding('16px'),
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
+    ...shorthands.padding("16px"),
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
   },
   saveButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-    gap: '16px',
-    maxWidth: '800px',
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+    gap: "16px",
+    maxWidth: "800px",
   },
   statCard: {
-    ...shorthands.padding('20px'),
-    textAlign: 'center',
+    ...shorthands.padding("20px"),
+    textAlign: "center",
   },
   statIcon: {
-    fontSize: '32px',
-    marginBottom: '8px',
+    fontSize: "32px",
+    marginBottom: "8px",
   },
   statLabel: {
-    color: 'var(--colorNeutralForeground3)',
+    color: "var(--colorNeutralForeground3)",
   },
   dialogContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
   },
   errorText: {
-    color: 'var(--colorPaletteRedForeground1)',
+    color: "var(--colorPaletteRedForeground1)",
   },
   offText: {
-    color: 'var(--colorNeutralForeground3)',
+    color: "var(--colorNeutralForeground3)",
   },
   actionsCell: {
-    display: 'flex',
-    gap: '4px',
-  }
+    display: "flex",
+    gap: "4px",
+  },
 });
 
 // ─── Add User Dialog ──────────────────────────────────────────────────────────
@@ -101,22 +136,24 @@ interface AddUserDialogProps {
 }
 
 function AddUserDialog({ open, onClose, onAdd, styles }: AddUserDialogProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("user");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
     try {
       await onAdd(username, password, role);
-      setUsername(''); setPassword(''); setRole('user');
+      setUsername("");
+      setPassword("");
+      setRole("user");
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed');
+      setError(err instanceof Error ? err.message : "Failed");
     } finally {
       setLoading(false);
     }
@@ -130,10 +167,18 @@ function AddUserDialog({ open, onClose, onAdd, styles }: AddUserDialogProps) {
             <DialogTitle>Add User</DialogTitle>
             <DialogContent className={styles.dialogContent}>
               <Field label="Username" required>
-                <Input value={username} onChange={(_, d) => setUsername(d.value)} autoFocus />
+                <Input
+                  value={username}
+                  onChange={(_, d) => setUsername(d.value)}
+                  autoFocus
+                />
               </Field>
               <Field label="Password">
-                <Input type="password" value={password} onChange={(_, d) => setPassword(d.value)} />
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(_, d) => setPassword(d.value)}
+                />
               </Field>
               <Field label="Role">
                 <Select value={role} onChange={(_, d) => setRole(d.value)}>
@@ -145,9 +190,11 @@ function AddUserDialog({ open, onClose, onAdd, styles }: AddUserDialogProps) {
               {error && <Text className={styles.errorText}>{error}</Text>}
             </DialogContent>
             <DialogActions>
-              <Button appearance="secondary" onClick={onClose}>Cancel</Button>
+              <Button appearance="secondary" onClick={onClose}>
+                Cancel
+              </Button>
               <Button appearance="primary" type="submit" disabled={loading}>
-                {loading ? <Spinner size="tiny" /> : 'Create'}
+                {loading ? <Spinner size="tiny" /> : "Create"}
               </Button>
             </DialogActions>
           </DialogBody>
@@ -162,28 +209,44 @@ interface EditUserDialogProps {
   user: User | null;
   open: boolean;
   onClose: () => void;
-  onSave: (id: string, updates: { username?: string; password?: string; role?: string; disabled?: boolean; root_folder_id?: string | null; avatar_url?: string | null }) => Promise<void>;
+  onSave: (
+    id: string,
+    updates: {
+      username?: string;
+      password?: string;
+      role?: string;
+      disabled?: boolean;
+      root_folder_id?: string | null;
+      avatar_url?: string | null;
+    },
+  ) => Promise<void>;
   styles: ReturnType<typeof useStyles>;
 }
 
-function EditUserDialog({ user, open, onClose, onSave, styles }: EditUserDialogProps) {
-  const [username, setUsername] = useState(user?.username ?? '');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState<string>(user?.role ?? 'user');
+function EditUserDialog({
+  user,
+  open,
+  onClose,
+  onSave,
+  styles,
+}: EditUserDialogProps) {
+  const [username, setUsername] = useState(user?.username ?? "");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<string>(user?.role ?? "user");
   const [disabled, setDisabled] = useState(!!user?.disabled);
-  const [rootFolderId, setRootFolderId] = useState(user?.root_folder_id ?? '');
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url ?? '');
+  const [rootFolderId, setRootFolderId] = useState(user?.root_folder_id ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url ?? "");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (user) {
       setUsername(user.username);
       setRole(user.role);
       setDisabled(!!user.disabled);
-      setRootFolderId(user.root_folder_id ?? '');
-      setAvatarUrl(user.avatar_url ?? '');
-      setPassword('');
+      setRootFolderId(user.root_folder_id ?? "");
+      setAvatarUrl(user.avatar_url ?? "");
+      setPassword("");
     }
   }, [user]);
 
@@ -191,22 +254,24 @@ function EditUserDialog({ user, open, onClose, onSave, styles }: EditUserDialogP
     e.preventDefault();
     if (!user) return;
     setLoading(true);
-    setError('');
+    setError("");
     const updates: Parameters<typeof onSave>[1] = {};
     if (username !== user.username) updates.username = username;
     if (password) updates.password = password;
     if (role !== user.role) updates.role = role;
     if (disabled !== !!user.disabled) updates.disabled = disabled;
     const newRootId = rootFolderId.trim() || null;
-    if (newRootId !== (user.root_folder_id ?? null)) updates.root_folder_id = newRootId;
+    if (newRootId !== (user.root_folder_id ?? null))
+      updates.root_folder_id = newRootId;
     const newAvatarUrl = avatarUrl.trim() || null;
-    if (newAvatarUrl !== (user.avatar_url ?? null)) updates.avatar_url = newAvatarUrl;
+    if (newAvatarUrl !== (user.avatar_url ?? null))
+      updates.avatar_url = newAvatarUrl;
 
     try {
       await onSave(user.id, updates);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed');
+      setError(err instanceof Error ? err.message : "Failed");
     } finally {
       setLoading(false);
     }
@@ -220,10 +285,18 @@ function EditUserDialog({ user, open, onClose, onSave, styles }: EditUserDialogP
             <DialogTitle>Edit User: {user?.username}</DialogTitle>
             <DialogContent className={styles.dialogContent}>
               <Field label="Username">
-                <Input value={username} onChange={(_, d) => setUsername(d.value)} />
+                <Input
+                  value={username}
+                  onChange={(_, d) => setUsername(d.value)}
+                />
               </Field>
               <Field label="New password (leave blank to keep current)">
-                <Input type="password" value={password} onChange={(_, d) => setPassword(d.value)} placeholder="••••••••" />
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(_, d) => setPassword(d.value)}
+                  placeholder="••••••••"
+                />
               </Field>
               <Field label="Role">
                 <Select value={role} onChange={(_, d) => setRole(d.value)}>
@@ -232,14 +305,20 @@ function EditUserDialog({ user, open, onClose, onSave, styles }: EditUserDialogP
                   <option value="guest">Guest</option>
                 </Select>
               </Field>
-              <Field label="Avatar URL" hint="URL for the user's profile picture. Leave blank to clear.">
+              <Field
+                label="Avatar URL"
+                hint="URL for the user's profile picture. Leave blank to clear."
+              >
                 <Input
                   value={avatarUrl}
                   onChange={(_, d) => setAvatarUrl(d.value)}
                   placeholder="https://example.com/avatar.png"
                 />
               </Field>
-              <Field label="Root folder ID" hint="Restricts user to this folder. Leave blank for full access.">
+              <Field
+                label="Root folder ID"
+                hint="Restricts user to this folder. Leave blank for full access."
+              >
                 <Input
                   value={rootFolderId}
                   onChange={(_, d) => setRootFolderId(d.value)}
@@ -254,9 +333,11 @@ function EditUserDialog({ user, open, onClose, onSave, styles }: EditUserDialogP
               {error && <Text className={styles.errorText}>{error}</Text>}
             </DialogContent>
             <DialogActions>
-              <Button appearance="secondary" onClick={onClose}>Cancel</Button>
+              <Button appearance="secondary" onClick={onClose}>
+                Cancel
+              </Button>
               <Button appearance="primary" type="submit" disabled={loading}>
-                {loading ? <Spinner size="tiny" /> : 'Save'}
+                {loading ? <Spinner size="tiny" /> : "Save"}
               </Button>
             </DialogActions>
           </DialogBody>
@@ -272,19 +353,25 @@ export default function AdminPage() {
   const { dispatchToast } = useToastController();
   const { refresh } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<AdminTab>('users');
+  const [tab, setTab] = useState<AdminTab>("users");
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [editUser, setEditUser] = useState<User | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
-  const [localSettings, setLocalSettings] = useState<Record<string, string>>({});
+  const [localSettings, setLocalSettings] = useState<Record<string, string>>(
+    {},
+  );
 
-  const toast = (msg: string, intent: 'success' | 'error' = 'success') =>
+  const toast = (msg: string, intent: "success" | "error" = "success") =>
     dispatchToast(
-      <Toast><MessageBar intent={intent}><MessageBarBody>{msg}</MessageBarBody></MessageBar></Toast>,
-      { intent }
+      <Toast>
+        <MessageBar intent={intent}>
+          <MessageBarBody>{msg}</MessageBarBody>
+        </MessageBar>
+      </Toast>,
+      { intent },
     );
 
   const loadAll = async () => {
@@ -303,18 +390,27 @@ export default function AdminPage() {
     }
   };
 
-  useEffect(() => { void loadAll(); }, []);
+  useEffect(() => {
+    void loadAll();
+  }, []);
 
-  const handleAddUser = async (username: string, password: string, role: string) => {
+  const handleAddUser = async (
+    username: string,
+    password: string,
+    role: string,
+  ) => {
     await adminApi.createUser(username, password, role);
     await loadAll();
     toast(`User "${username}" created`);
   };
 
-  const handleEditUser = async (id: string, updates: Parameters<typeof adminApi.updateUser>[1]) => {
+  const handleEditUser = async (
+    id: string,
+    updates: Parameters<typeof adminApi.updateUser>[1],
+  ) => {
     await adminApi.updateUser(id, updates);
     await loadAll();
-    toast('User updated');
+    toast("User updated");
   };
 
   const handleDeleteUser = async (id: string, username: string) => {
@@ -325,13 +421,18 @@ export default function AdminPage() {
   };
 
   const handleForceLogin = async (id: string, username: string) => {
-    if (!confirm(`Force login as user "${username}"? You will be logged out of your current admin session.`)) return;
+    if (
+      !confirm(
+        `Force login as user "${username}"? You will be logged out of your current admin session.`,
+      )
+    )
+      return;
     try {
       await adminApi.forceLogin(id);
       await refresh();
-      navigate('/');
+      navigate("/");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed to force login', 'error');
+      toast(e instanceof Error ? e.message : "Failed to force login", "error");
     }
   };
 
@@ -340,32 +441,43 @@ export default function AdminPage() {
     try {
       await adminApi.updateSettings(localSettings);
 
-      toast('Settings saved');
+      toast("Settings saved");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed', 'error');
+      toast(e instanceof Error ? e.message : "Failed", "error");
     } finally {
       setSavingSettings(false);
     }
   };
 
   const setSetting = (key: string, value: string) =>
-    setLocalSettings(prev => ({ ...prev, [key]: value }));
+    setLocalSettings((prev) => ({ ...prev, [key]: value }));
 
   return (
     <div className={styles.root}>
       <Title2 className={styles.title}>Admin Panel</Title2>
 
-      <TabList selectedValue={tab} onTabSelect={(_, d) => setTab(d.value as AdminTab)}>
-        <Tab value="users" icon={<PeopleRegular />}>Users</Tab>
-        <Tab value="settings" icon={<SettingsRegular />}>Settings</Tab>
-        <Tab value="stats" icon={<DocumentRegular />}>Statistics</Tab>
+      <TabList
+        selectedValue={tab}
+        onTabSelect={(_, d) => setTab(d.value as AdminTab)}
+      >
+        <Tab value="users" icon={<PeopleRegular />}>
+          Users
+        </Tab>
+        <Tab value="settings" icon={<SettingsRegular />}>
+          Settings
+        </Tab>
+        <Tab value="stats" icon={<DocumentRegular />}>
+          Statistics
+        </Tab>
       </TabList>
 
       <div className={styles.contentContainer}>
-        {loading ? <Spinner label="Loading..." /> : (
+        {loading ? (
+          <Spinner label="Loading..." />
+        ) : (
           <>
             {/* Users tab */}
-            {tab === 'users' && (
+            {tab === "users" && (
               <div>
                 <div className={styles.usersHeader}>
                   <Text weight="semibold">{users.length} users</Text>
@@ -386,11 +498,13 @@ export default function AdminPage() {
                       <TableHeaderCell>2FA</TableHeaderCell>
                       <TableHeaderCell>Status</TableHeaderCell>
                       <TableHeaderCell>Created</TableHeaderCell>
-                      <TableHeaderCell style={{ width: 100 }}>Actions</TableHeaderCell>
+                      <TableHeaderCell style={{ width: 100 }}>
+                        Actions
+                      </TableHeaderCell>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map(u => (
+                    {users.map((u) => (
                       <TableRow key={u.id}>
                         <TableCell>
                           <TableCellLayout>
@@ -400,7 +514,13 @@ export default function AdminPage() {
                         <TableCell>
                           <TableCellLayout>
                             <Badge
-                              color={u.role === 'admin' ? 'danger' : u.role === 'guest' ? 'subtle' : 'brand'}
+                              color={
+                                u.role === "admin"
+                                  ? "danger"
+                                  : u.role === "guest"
+                                    ? "subtle"
+                                    : "brand"
+                              }
                               size="small"
                             >
                               {u.role}
@@ -409,19 +529,32 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell>
                           <TableCellLayout>
-                            {u.totp_enabled ? <Badge color="success" size="small">Enabled</Badge> : <Text size={200} className={styles.offText}>Off</Text>}
+                            {u.totp_enabled ? (
+                              <Badge color="success" size="small">
+                                Enabled
+                              </Badge>
+                            ) : (
+                              <Text size={200} className={styles.offText}>
+                                Off
+                              </Text>
+                            )}
                           </TableCellLayout>
                         </TableCell>
                         <TableCell>
                           <TableCellLayout>
-                            <Badge color={u.disabled ? 'danger' : 'success'} size="small">
-                              {u.disabled ? 'Disabled' : 'Active'}
+                            <Badge
+                              color={u.disabled ? "danger" : "success"}
+                              size="small"
+                            >
+                              {u.disabled ? "Disabled" : "Active"}
                             </Badge>
                           </TableCellLayout>
                         </TableCell>
                         <TableCell>
                           <TableCellLayout>
-                            <Text size={200}>{new Date(u.created_at).toLocaleDateString()}</Text>
+                            <Text size={200}>
+                              {new Date(u.created_at).toLocaleDateString()}
+                            </Text>
                           </TableCellLayout>
                         </TableCell>
                         <TableCell>
@@ -435,12 +568,17 @@ export default function AdminPage() {
                                   onClick={() => setEditUser(u)}
                                 />
                               </Tooltip>
-                              <Tooltip content="Force Login" relationship="label">
+                              <Tooltip
+                                content="Force Login"
+                                relationship="label"
+                              >
                                 <Button
                                   appearance="subtle"
                                   size="small"
                                   icon={<ArrowRightRegular />}
-                                  onClick={() => void handleForceLogin(u.id, u.username)}
+                                  onClick={() =>
+                                    void handleForceLogin(u.id, u.username)
+                                  }
                                   disabled={!!u.disabled}
                                 />
                               </Tooltip>
@@ -449,7 +587,9 @@ export default function AdminPage() {
                                   appearance="subtle"
                                   size="small"
                                   icon={<DeleteRegular />}
-                                  onClick={() => void handleDeleteUser(u.id, u.username)}
+                                  onClick={() =>
+                                    void handleDeleteUser(u.id, u.username)
+                                  }
                                 />
                               </Tooltip>
                             </div>
@@ -463,41 +603,59 @@ export default function AdminPage() {
             )}
 
             {/* Settings tab */}
-            {tab === 'settings' && (
+            {tab === "settings" && (
               <div className={styles.settingsContainer}>
                 <Card>
                   <div className={styles.cardContent}>
                     <Title3>Site Settings</Title3>
                     <Field label="Site name">
                       <Input
-                        value={localSettings.site_name ?? ''}
-                        onChange={(_, d) => setSetting('site_name', d.value)}
+                        value={localSettings.site_name ?? ""}
+                        onChange={(_, d) => setSetting("site_name", d.value)}
                       />
                     </Field>
-                    <Field label="Site icon URL" hint="Displayed in the sidebar and as the browser tab favicon">
+                    <Field
+                      label="Site icon URL"
+                      hint="Displayed in the sidebar and as the browser tab favicon"
+                    >
                       <Input
-                        value={localSettings.site_icon_url ?? ''}
-                        onChange={(_, d) => setSetting('site_icon_url', d.value)}
+                        value={localSettings.site_icon_url ?? ""}
+                        onChange={(_, d) =>
+                          setSetting("site_icon_url", d.value)
+                        }
                         placeholder="https://example.com/icon.png"
-                        contentAfter={localSettings.site_icon_url ? (
-                          <img
-                            src={localSettings.site_icon_url}
-                            alt="icon preview"
-                            style={{ width: 20, height: 20, objectFit: 'contain' }}
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        ) : undefined}
+                        contentAfter={
+                          localSettings.site_icon_url ? (
+                            <img
+                              src={localSettings.site_icon_url}
+                              alt="icon preview"
+                              style={{
+                                width: 20,
+                                height: 20,
+                                objectFit: "contain",
+                              }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display =
+                                  "none";
+                              }}
+                            />
+                          ) : undefined
+                        }
                       />
                     </Field>
                     <Switch
                       label="Allow public registration"
-                      checked={localSettings.allow_registration === '1'}
-                      onChange={(_, d) => setSetting('allow_registration', d.checked ? '1' : '0')}
+                      checked={localSettings.allow_registration === "1"}
+                      onChange={(_, d) =>
+                        setSetting("allow_registration", d.checked ? "1" : "0")
+                      }
                     />
                     <Switch
                       label="Allow guests to download"
-                      checked={localSettings.guest_can_download !== '0'}
-                      onChange={(_, d) => setSetting('guest_can_download', d.checked ? '1' : '0')}
+                      checked={localSettings.guest_can_download !== "0"}
+                      onChange={(_, d) =>
+                        setSetting("guest_can_download", d.checked ? "1" : "0")
+                      }
                     />
                   </div>
                 </Card>
@@ -507,15 +665,19 @@ export default function AdminPage() {
                     <Title3>Share Link Defaults</Title3>
                     <Field label="Site-wide Default Share Title">
                       <Input
-                        value={localSettings.default_share_title ?? ''}
-                        onChange={(_, d) => setSetting('default_share_title', d.value)}
-                        placeholder={`E.g., ${localSettings.site_name || 'Drive'} Shared File`}
+                        value={localSettings.default_share_title ?? ""}
+                        onChange={(_, d) =>
+                          setSetting("default_share_title", d.value)
+                        }
+                        placeholder={`E.g., ${localSettings.site_name || "Drive"} Shared File`}
                       />
                     </Field>
                     <Field label="Site-wide Default Share Description">
                       <Input
-                        value={localSettings.default_share_description ?? ''}
-                        onChange={(_, d) => setSetting('default_share_description', d.value)}
+                        value={localSettings.default_share_description ?? ""}
+                        onChange={(_, d) =>
+                          setSetting("default_share_description", d.value)
+                        }
                         placeholder="E.g., Click below to download."
                       />
                     </Field>
@@ -523,24 +685,32 @@ export default function AdminPage() {
                       <Input
                         type="number"
                         min="0"
-                        value={localSettings.default_share_expiry_hours ?? '168'}
-                        onChange={(_, d) => setSetting('default_share_expiry_hours', d.value)}
+                        value={
+                          localSettings.default_share_expiry_hours ?? "168"
+                        }
+                        onChange={(_, d) =>
+                          setSetting("default_share_expiry_hours", d.value)
+                        }
                       />
                     </Field>
                     <Field label="Default max views (0=unlimited)">
                       <Input
                         type="number"
                         min="0"
-                        value={localSettings.default_max_views ?? '0'}
-                        onChange={(_, d) => setSetting('default_max_views', d.value)}
+                        value={localSettings.default_max_views ?? "0"}
+                        onChange={(_, d) =>
+                          setSetting("default_max_views", d.value)
+                        }
                       />
                     </Field>
                     <Field label="Default max downloads (0=unlimited)">
                       <Input
                         type="number"
                         min="0"
-                        value={localSettings.default_max_downloads ?? '0'}
-                        onChange={(_, d) => setSetting('default_max_downloads', d.value)}
+                        value={localSettings.default_max_downloads ?? "0"}
+                        onChange={(_, d) =>
+                          setSetting("default_max_downloads", d.value)
+                        }
                       />
                     </Field>
                   </div>
@@ -553,8 +723,8 @@ export default function AdminPage() {
                       <Input
                         type="number"
                         min="1048576"
-                        value={localSettings.chunk_size ?? '5242880'}
-                        onChange={(_, d) => setSetting('chunk_size', d.value)}
+                        value={localSettings.chunk_size ?? "5242880"}
+                        onChange={(_, d) => setSetting("chunk_size", d.value)}
                       />
                     </Field>
                   </div>
@@ -562,7 +732,13 @@ export default function AdminPage() {
 
                 <Button
                   appearance="primary"
-                  icon={savingSettings ? <Spinner size="tiny" /> : <CheckmarkRegular />}
+                  icon={
+                    savingSettings ? (
+                      <Spinner size="tiny" />
+                    ) : (
+                      <CheckmarkRegular />
+                    )
+                  }
                   onClick={handleSaveSettings}
                   disabled={savingSettings}
                   className={styles.saveButton}
@@ -573,19 +749,43 @@ export default function AdminPage() {
             )}
 
             {/* Stats tab */}
-            {tab === 'stats' && stats && (
+            {tab === "stats" && stats && (
               <div className={styles.statsGrid}>
                 {[
-                  { label: 'Total Users', value: stats.users, icon: <PeopleRegular /> },
-                  { label: 'Total Files', value: stats.files, icon: <DocumentRegular /> },
-                  { label: 'Storage Used', value: formatBytes(stats.totalSize), icon: <DatabaseRegular /> },
-                  { label: 'Share Links', value: stats.shares, icon: <LinkRegular /> },
-                  { label: 'Active Uploads', value: stats.activeUploads, icon: <ArrowUploadRegular /> },
-                ].map(stat => (
+                  {
+                    label: "Total Users",
+                    value: stats.users,
+                    icon: <PeopleRegular />,
+                  },
+                  {
+                    label: "Total Files",
+                    value: stats.files,
+                    icon: <DocumentRegular />,
+                  },
+                  {
+                    label: "Storage Used",
+                    value: formatBytes(stats.totalSize),
+                    icon: <DatabaseRegular />,
+                  },
+                  {
+                    label: "Share Links",
+                    value: stats.shares,
+                    icon: <LinkRegular />,
+                  },
+                  {
+                    label: "Active Uploads",
+                    value: stats.activeUploads,
+                    icon: <ArrowUploadRegular />,
+                  },
+                ].map((stat) => (
                   <Card key={stat.label} className={styles.statCard}>
                     <div className={styles.statIcon}>{stat.icon}</div>
-                    <Text size={600} weight="bold" block>{String(stat.value)}</Text>
-                    <Text size={200} className={styles.statLabel}>{stat.label}</Text>
+                    <Text size={600} weight="bold" block>
+                      {String(stat.value)}
+                    </Text>
+                    <Text size={200} className={styles.statLabel}>
+                      {stat.label}
+                    </Text>
                   </Card>
                 ))}
               </div>

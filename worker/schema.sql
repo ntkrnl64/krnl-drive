@@ -1,6 +1,8 @@
--- KRNL Drive Database Schema
--- Apply with: wrangler d1 execute krnl-drive-db --file=worker/schema.sql
+-- KRNL Drive Database Schema (all migrations combined)
+-- For fresh installs: wrangler d1 execute krnl-drive-db --file=worker/schema.sql
+-- For incremental updates, run individual migrations from worker/migrations/
 
+-- 0001_users
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
@@ -17,10 +19,6 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at INTEGER NOT NULL
 );
 
--- Migrations: run once on existing databases
--- wrangler d1 execute krnl-drive-db --command="ALTER TABLE users ADD COLUMN avatar_url TEXT" --remote
--- wrangler d1 execute krnl-drive-db --command="ALTER TABLE users ADD COLUMN root_folder_id TEXT REFERENCES files(id) ON DELETE SET NULL" --remote
-
 CREATE TABLE IF NOT EXISTS recovery_codes (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -29,6 +27,15 @@ CREATE TABLE IF NOT EXISTS recovery_codes (
   created_at INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  pending_2fa INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- 0002_passkeys
 CREATE TABLE IF NOT EXISTS passkeys (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -49,14 +56,7 @@ CREATE TABLE IF NOT EXISTS webauthn_challenges (
   expires_at INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS sessions (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  pending_2fa INTEGER NOT NULL DEFAULT 0,
-  expires_at INTEGER NOT NULL,
-  created_at INTEGER NOT NULL
-);
-
+-- 0003_files
 CREATE TABLE IF NOT EXISTS files (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS files (
 CREATE INDEX IF NOT EXISTS idx_files_parent ON files(parent_id);
 CREATE INDEX IF NOT EXISTS idx_files_owner ON files(owner_id);
 
+-- 0004_upload_sessions
 CREATE TABLE IF NOT EXISTS upload_sessions (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id),
@@ -90,6 +91,7 @@ CREATE TABLE IF NOT EXISTS upload_sessions (
   updated_at INTEGER NOT NULL
 );
 
+-- 0005_shares
 CREATE TABLE IF NOT EXISTS shares (
   id TEXT PRIMARY KEY,
   file_id TEXT NOT NULL REFERENCES files(id) ON DELETE CASCADE,
@@ -108,12 +110,12 @@ CREATE TABLE IF NOT EXISTS shares (
 CREATE INDEX IF NOT EXISTS idx_shares_token ON shares(token);
 CREATE INDEX IF NOT EXISTS idx_shares_file ON shares(file_id);
 
+-- 0006_settings
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
 
--- Default settings
 INSERT OR IGNORE INTO settings VALUES ('default_share_expiry_hours', '168');
 INSERT OR IGNORE INTO settings VALUES ('default_max_views', '0');
 INSERT OR IGNORE INTO settings VALUES ('default_max_downloads', '0');

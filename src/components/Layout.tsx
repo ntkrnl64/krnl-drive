@@ -172,7 +172,7 @@ const useStyles = makeStyles({
       backgroundColor: "rgba(0, 0, 0, 0.4)",
       zIndex: 999,
     },
-  }
+  },
 });
 
 interface LayoutProps {
@@ -199,13 +199,31 @@ export default function Layout({ children }: LayoutProps) {
   const navItems = [
     { path: "/", label: "Files", icon: <FolderRegular fontSize={20} /> },
     ...(user?.role !== "guest"
-      ? [{ path: "/shares", label: "Shares", icon: <LinkRegular fontSize={20} /> }]
+      ? [
+          {
+            path: "/shares",
+            label: "Shares",
+            icon: <LinkRegular fontSize={20} />,
+          },
+        ]
       : []),
     ...(user?.role === "admin"
-      ? [{ path: "/admin", label: "Admin", icon: <ShieldPersonRegular fontSize={20} /> }]
+      ? [
+          {
+            path: "/admin",
+            label: "Admin",
+            icon: <ShieldPersonRegular fontSize={20} />,
+          },
+        ]
       : []),
     ...(user?.role !== "guest"
-      ? [{ path: "/settings", label: "Settings", icon: <SettingsRegular fontSize={20} /> }]
+      ? [
+          {
+            path: "/settings",
+            label: "Settings",
+            icon: <SettingsRegular fontSize={20} />,
+          },
+        ]
       : []),
   ];
 
@@ -213,21 +231,29 @@ export default function Layout({ children }: LayoutProps) {
     <div className={styles.root}>
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
-          className={styles.overlay} 
-          onClick={() => setSidebarOpen(false)} 
-        />
+        <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <nav className={mergeClasses(styles.sidebar, sidebarOpen && styles.sidebarOpen)}>
+      <nav
+        className={mergeClasses(
+          styles.sidebar,
+          sidebarOpen && styles.sidebarOpen,
+        )}
+      >
         {/* Logo */}
         <div className={styles.logoContainer}>
           <div className={styles.logoText}>
             {config.siteIconUrl ? (
-              <img src={config.siteIconUrl} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+              <img
+                src={config.siteIconUrl}
+                alt=""
+                style={{ width: 24, height: 24, objectFit: "contain" }}
+              />
             ) : (
-              <FolderRegular style={{ fontSize: 24, color: 'var(--colorBrandForeground1)' }} />
+              <FolderRegular
+                style={{ fontSize: 24, color: "var(--colorBrandForeground1)" }}
+              />
             )}
             <Text weight="semibold" size={400}>
               {config.siteName}
@@ -244,12 +270,17 @@ export default function Layout({ children }: LayoutProps) {
         {/* Nav links */}
         <div className={styles.navContainer}>
           {navItems.map((item) => {
-            const isSelected = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
+            const isSelected =
+              location.pathname === item.path ||
+              (item.path !== "/" && location.pathname.startsWith(item.path));
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={mergeClasses(styles.navItem, isSelected && styles.navItemSelected)}
+                className={mergeClasses(
+                  styles.navItem,
+                  isSelected && styles.navItemSelected,
+                )}
               >
                 {item.icon}
                 {item.label}
@@ -265,11 +296,19 @@ export default function Layout({ children }: LayoutProps) {
               <button className={styles.userButton}>
                 <Avatar
                   name={user?.username}
-                  image={user?.avatar_url ? { src: user.avatar_url } : undefined}
+                  image={
+                    user?.avatar_url ? { src: user.avatar_url } : undefined
+                  }
                   size={32}
                 />
                 <div className={styles.userInfo}>
-                  <Text size={300} weight="semibold" truncate block style={{ color: "var(--colorNeutralForeground1)" }}>
+                  <Text
+                    size={300}
+                    weight="semibold"
+                    truncate
+                    block
+                    style={{ color: "var(--colorNeutralForeground1)" }}
+                  >
                     {user?.username}
                   </Text>
                   <Badge
@@ -330,9 +369,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className={styles.pageContent}>
-          {children}
-        </main>
+        <main className={styles.pageContent}>{children}</main>
         <Toaster position="top-end" />
       </div>
     </div>

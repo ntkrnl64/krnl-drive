@@ -1,7 +1,9 @@
 // ─── Hex helpers ────────────────────────────────────────────────────────────
 
 export function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export function hexToBytes(hex: string): Uint8Array {
@@ -21,7 +23,9 @@ export function randomId(): string {
 export function randomToken(bytes = 32): string {
   const arr = crypto.getRandomValues(new Uint8Array(bytes));
   return btoa(String.fromCharCode(...arr))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
 }
 
 // ─── Password hashing (PBKDF2) ───────────────────────────────────────────────
@@ -29,25 +33,38 @@ export function randomToken(bytes = 32): string {
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const keyMaterial = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
   );
   const derived = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
-    keyMaterial, 256
+    { name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" },
+    keyMaterial,
+    256,
   );
   return `pbkdf2:${bytesToHex(salt)}:${bytesToHex(new Uint8Array(derived))}`;
 }
 
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const parts = stored.split(':');
-  if (parts.length !== 3 || parts[0] !== 'pbkdf2') return false;
+export async function verifyPassword(
+  password: string,
+  stored: string,
+): Promise<boolean> {
+  const parts = stored.split(":");
+  if (parts.length !== 3 || parts[0] !== "pbkdf2") return false;
   const salt = hexToBytes(parts[1]);
   const keyMaterial = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
   );
   const derived = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
-    keyMaterial, 256
+    { name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" },
+    keyMaterial,
+    256,
   );
   const computed = `pbkdf2:${parts[1]}:${bytesToHex(new Uint8Array(derived))}`;
   // Constant-time comparison
@@ -62,10 +79,12 @@ export async function verifyPassword(password: string, stored: string): Promise<
 
 // ─── Base32 (for TOTP) ───────────────────────────────────────────────────────
 
-const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const BASE32_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 export function base32Encode(bytes: Uint8Array): string {
-  let bits = 0, value = 0, output = '';
+  let bits = 0,
+    value = 0,
+    output = "";
   for (const byte of bytes) {
     value = (value << 8) | byte;
     bits += 8;
@@ -79,9 +98,10 @@ export function base32Encode(bytes: Uint8Array): string {
 }
 
 export function base32Decode(input: string): Uint8Array {
-  const clean = input.toUpperCase().replace(/=+$/, '');
+  const clean = input.toUpperCase().replace(/=+$/, "");
   const bytes: number[] = [];
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   for (const char of clean) {
     const idx = BASE32_CHARS.indexOf(char);
     if (idx === -1) continue;
@@ -101,7 +121,10 @@ export function generateTOTPSecret(): string {
   return base32Encode(crypto.getRandomValues(new Uint8Array(20)));
 }
 
-export async function computeTOTP(secret: string, counter: number): Promise<string> {
+export async function computeTOTP(
+  secret: string,
+  counter: number,
+): Promise<string> {
   const secretBytes = base32Decode(secret);
   const counterBytes = new Uint8Array(8);
   let n = counter;
@@ -110,28 +133,41 @@ export async function computeTOTP(secret: string, counter: number): Promise<stri
     n = Math.floor(n / 256);
   }
   const key = await crypto.subtle.importKey(
-    'raw', secretBytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+    "raw",
+    secretBytes,
+    { name: "HMAC", hash: "SHA-1" },
+    false,
+    ["sign"],
   );
-  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, counterBytes));
+  const sig = new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, counterBytes),
+  );
   const offset = sig[19] & 0xf;
-  const otp = (
-    ((sig[offset] & 0x7f) << 24) |
-    ((sig[offset + 1] & 0xff) << 16) |
-    ((sig[offset + 2] & 0xff) << 8) |
-    (sig[offset + 3] & 0xff)
-  ) % 1_000_000;
-  return otp.toString().padStart(6, '0');
+  const otp =
+    (((sig[offset] & 0x7f) << 24) |
+      ((sig[offset + 1] & 0xff) << 16) |
+      ((sig[offset + 2] & 0xff) << 8) |
+      (sig[offset + 3] & 0xff)) %
+    1_000_000;
+  return otp.toString().padStart(6, "0");
 }
 
-export async function verifyTOTP(secret: string, code: string): Promise<boolean> {
+export async function verifyTOTP(
+  secret: string,
+  code: string,
+): Promise<boolean> {
   const t = Math.floor(Date.now() / 30_000);
   for (let w = -1; w <= 1; w++) {
-    if (await computeTOTP(secret, t + w) === code) return true;
+    if ((await computeTOTP(secret, t + w)) === code) return true;
   }
   return false;
 }
 
-export function buildTOTPUri(secret: string, username: string, issuer = 'KRNL Drive'): string {
+export function buildTOTPUri(
+  secret: string,
+  username: string,
+  issuer = "KRNL Drive",
+): string {
   return `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(username)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 }
 
@@ -141,15 +177,18 @@ export function generateRecoveryCode(): string {
   const arr = crypto.getRandomValues(new Uint8Array(10));
   const hex = bytesToHex(arr);
   // Format: xxxxx-xxxxx-xxxxx-xxxxx
-  return `${hex.slice(0,5)}-${hex.slice(5,10)}-${hex.slice(10,15)}-${hex.slice(15,20)}`;
+  return `${hex.slice(0, 5)}-${hex.slice(5, 10)}-${hex.slice(10, 15)}-${hex.slice(15, 20)}`;
 }
 
 export async function hashRecoveryCode(code: string): Promise<string> {
-  const normalized = code.replace(/-/g, '').toLowerCase();
+  const normalized = code.replace(/-/g, "").toLowerCase();
   return hashPassword(normalized);
 }
 
-export async function verifyRecoveryCode(code: string, hash: string): Promise<boolean> {
-  const normalized = code.replace(/-/g, '').toLowerCase();
+export async function verifyRecoveryCode(
+  code: string,
+  hash: string,
+): Promise<boolean> {
+  const normalized = code.replace(/-/g, "").toLowerCase();
   return verifyPassword(normalized, hash);
 }

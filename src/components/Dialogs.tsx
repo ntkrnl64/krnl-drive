@@ -1,33 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
-  Dialog, DialogSurface, DialogTitle, DialogBody, DialogActions, DialogContent,
-  Button, Field, Input, Spinner, Text, makeStyles
-} from '@fluentui/react-components';
-import type { FileItem } from '../types.ts';
-import { FolderNavigator } from './FolderNavigator.tsx';
+  Dialog,
+  DialogSurface,
+  DialogTitle,
+  DialogBody,
+  DialogActions,
+  DialogContent,
+  Button,
+  Field,
+  Input,
+  Spinner,
+  Text,
+  makeStyles,
+} from "@fluentui/react-components";
+import type { FileItem } from "../types.ts";
+import { FolderNavigator } from "./FolderNavigator.tsx";
 
 const useStyles = makeStyles({
   dialogContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    paddingTop: '8px',
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    paddingTop: "8px",
   },
   dangerButton: {
-    backgroundColor: 'var(--colorPaletteRedBackground3)',
-    color: 'white',
-    '&:hover': {
-      backgroundColor: 'var(--colorPaletteRedBackground3Hover)',
-      color: 'white',
+    backgroundColor: "var(--colorPaletteRedBackground3)",
+    color: "white",
+    "&:hover": {
+      backgroundColor: "var(--colorPaletteRedBackground3Hover)",
+      color: "white",
     },
-    '&:active': {
-      backgroundColor: 'var(--colorPaletteRedBackground3Pressed)',
-      color: 'white',
-    }
+    "&:active": {
+      backgroundColor: "var(--colorPaletteRedBackground3Pressed)",
+      color: "white",
+    },
   },
   errorText: {
-    color: 'var(--colorPaletteRedForeground1)',
-  }
+    color: "var(--colorPaletteRedForeground1)",
+  },
 });
 
 // ─── Create Folder Dialog ─────────────────────────────────────────────────────
@@ -37,9 +47,13 @@ interface CreateFolderDialogProps {
   onCreate: (name: string) => Promise<void>;
 }
 
-export function CreateFolderDialog({ open, onClose, onCreate }: CreateFolderDialogProps) {
+export function CreateFolderDialog({
+  open,
+  onClose,
+  onCreate,
+}: CreateFolderDialogProps) {
   const styles = useStyles();
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,7 +62,7 @@ export function CreateFolderDialog({ open, onClose, onCreate }: CreateFolderDial
     setLoading(true);
     try {
       await onCreate(name.trim());
-      setName('');
+      setName("");
       onClose();
     } finally {
       setLoading(false);
@@ -72,9 +86,19 @@ export function CreateFolderDialog({ open, onClose, onCreate }: CreateFolderDial
               </Field>
             </DialogContent>
             <DialogActions>
-              <Button appearance="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
-              <Button appearance="primary" type="submit" disabled={loading || !name.trim()}>
-                {loading ? <Spinner size="tiny" /> : 'Create'}
+              <Button
+                appearance="secondary"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                appearance="primary"
+                type="submit"
+                disabled={loading || !name.trim()}
+              >
+                {loading ? <Spinner size="tiny" /> : "Create"}
               </Button>
             </DialogActions>
           </DialogBody>
@@ -92,9 +116,14 @@ interface RenameDialogProps {
   onRename: (id: string, newName: string) => Promise<void>;
 }
 
-export function RenameDialog({ item, open, onClose, onRename }: RenameDialogProps) {
+export function RenameDialog({
+  item,
+  open,
+  onClose,
+  onRename,
+}: RenameDialogProps) {
   const styles = useStyles();
-  const [name, setName] = useState(item?.name ?? '');
+  const [name, setName] = useState(item?.name ?? "");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,7 +139,15 @@ export function RenameDialog({ item, open, onClose, onRename }: RenameDialogProp
   };
 
   return (
-    <Dialog open={open} onOpenChange={(_, d) => { if (!d.open) { onClose(); setName(item?.name ?? ''); } }}>
+    <Dialog
+      open={open}
+      onOpenChange={(_, d) => {
+        if (!d.open) {
+          onClose();
+          setName(item?.name ?? "");
+        }
+      }}
+    >
       <DialogSurface>
         <form onSubmit={handleSubmit}>
           <DialogBody>
@@ -121,14 +158,24 @@ export function RenameDialog({ item, open, onClose, onRename }: RenameDialogProp
                   value={name}
                   onChange={(_, d) => setName(d.value)}
                   autoFocus
-                  onFocus={e => e.target.select()}
+                  onFocus={(e) => e.target.select()}
                 />
               </Field>
             </DialogContent>
             <DialogActions>
-              <Button appearance="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
-              <Button appearance="primary" type="submit" disabled={loading || !name.trim() || name === item?.name}>
-                {loading ? <Spinner size="tiny" /> : 'Rename'}
+              <Button
+                appearance="secondary"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                appearance="primary"
+                type="submit"
+                disabled={loading || !name.trim() || name === item?.name}
+              >
+                {loading ? <Spinner size="tiny" /> : "Rename"}
               </Button>
             </DialogActions>
           </DialogBody>
@@ -146,7 +193,12 @@ interface DeleteDialogProps {
   onDelete: (id: string) => Promise<void>;
 }
 
-export function DeleteDialog({ item, open, onClose, onDelete }: DeleteDialogProps) {
+export function DeleteDialog({
+  item,
+  open,
+  onClose,
+  onDelete,
+}: DeleteDialogProps) {
   const styles = useStyles();
   const [loading, setLoading] = useState(false);
 
@@ -168,15 +220,21 @@ export function DeleteDialog({ item, open, onClose, onDelete }: DeleteDialogProp
           <DialogTitle>Delete "{item?.name}"?</DialogTitle>
           <DialogContent className={styles.dialogContent}>
             <Text>
-              {item?.type === 'folder'
-                ? 'This will permanently delete the folder and all its contents. This cannot be undone.'
-                : 'This will permanently delete the file. This cannot be undone.'}
+              {item?.type === "folder"
+                ? "This will permanently delete the folder and all its contents. This cannot be undone."
+                : "This will permanently delete the file. This cannot be undone."}
             </Text>
           </DialogContent>
           <DialogActions>
-            <Button appearance="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
-            <Button className={styles.dangerButton} onClick={handleDelete} disabled={loading}>
-              {loading ? <Spinner size="tiny" /> : 'Delete'}
+            <Button appearance="secondary" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              className={styles.dangerButton}
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              {loading ? <Spinner size="tiny" /> : "Delete"}
             </Button>
           </DialogActions>
         </DialogBody>
@@ -194,7 +252,13 @@ interface MoveDialogProps {
   currentParentId: string | null;
 }
 
-export function MoveDialog({ item, open, onClose, onMove, currentParentId }: MoveDialogProps) {
+export function MoveDialog({
+  item,
+  open,
+  onClose,
+  onMove,
+  currentParentId,
+}: MoveDialogProps) {
   const styles = useStyles();
   const [targetId, setTargetId] = useState<string | null>(null); // Initial state should be null
 
@@ -209,7 +273,7 @@ export function MoveDialog({ item, open, onClose, onMove, currentParentId }: Mov
     if (!item || targetId === null) return; // targetId cannot be null if we are moving
     setLoading(true);
     try {
-      await onMove(item.id, targetId === 'root' ? null : targetId);
+      await onMove(item.id, targetId === "root" ? null : targetId);
       onClose();
     } finally {
       setLoading(false);
@@ -222,7 +286,7 @@ export function MoveDialog({ item, open, onClose, onMove, currentParentId }: Mov
     // For simplicity, we'll just prevent moving into the item's own ID.
     // A more robust check would involve checking if selectedTargetId is a descendant of item.id
     return selectedTargetId === item.id;
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(_, d) => !d.open && onClose()}>
@@ -233,21 +297,33 @@ export function MoveDialog({ item, open, onClose, onMove, currentParentId }: Mov
             <Text weight="semibold">Move to folder:</Text>
             <FolderNavigator
               initialFolderId={currentParentId}
-              onSelect={selectedId => setTargetId(selectedId)}
+              onSelect={(selectedId) => setTargetId(selectedId)}
               excludeItemId={item?.id}
               currentParentId={currentParentId}
             />
-            {targetId === null && <Text className={styles.errorText}>Please select a destination folder.</Text>}
-            {isMovingIntoSelf(targetId) && <Text className={styles.errorText}>Cannot move item into itself or its subfolder.</Text>}
+            {targetId === null && (
+              <Text className={styles.errorText}>
+                Please select a destination folder.
+              </Text>
+            )}
+            {isMovingIntoSelf(targetId) && (
+              <Text className={styles.errorText}>
+                Cannot move item into itself or its subfolder.
+              </Text>
+            )}
           </DialogContent>
           <DialogActions>
-            <Button appearance="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
+            <Button appearance="secondary" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
             <Button
               appearance="primary"
               onClick={handleMove}
-              disabled={loading || targetId === null || isMovingIntoSelf(targetId)}
+              disabled={
+                loading || targetId === null || isMovingIntoSelf(targetId)
+              }
             >
-              {loading ? <Spinner size="tiny" /> : 'Move'}
+              {loading ? <Spinner size="tiny" /> : "Move"}
             </Button>
           </DialogActions>
         </DialogBody>
@@ -265,7 +341,13 @@ interface CopyDialogProps {
   currentParentId: string | null;
 }
 
-export function CopyDialog({ item, open, onClose, onCopy, currentParentId }: CopyDialogProps) {
+export function CopyDialog({
+  item,
+  open,
+  onClose,
+  onCopy,
+  currentParentId,
+}: CopyDialogProps) {
   const styles = useStyles();
   const [targetId, setTargetId] = useState<string | null>(null);
 
@@ -279,7 +361,7 @@ export function CopyDialog({ item, open, onClose, onCopy, currentParentId }: Cop
     if (!item || targetId === null) return;
     setLoading(true);
     try {
-      await onCopy(item.id, targetId === 'root' ? null : targetId);
+      await onCopy(item.id, targetId === "root" ? null : targetId);
       onClose();
     } finally {
       setLoading(false);
@@ -289,7 +371,7 @@ export function CopyDialog({ item, open, onClose, onCopy, currentParentId }: Cop
   const isCopyingIntoSelf = (selectedTargetId: string | null) => {
     if (!item || !selectedTargetId) return false;
     return selectedTargetId === item.id;
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(_, d) => !d.open && onClose()}>
@@ -300,21 +382,33 @@ export function CopyDialog({ item, open, onClose, onCopy, currentParentId }: Cop
             <Text weight="semibold">Copy to folder:</Text>
             <FolderNavigator
               initialFolderId={currentParentId}
-              onSelect={selectedId => setTargetId(selectedId)}
+              onSelect={(selectedId) => setTargetId(selectedId)}
               excludeItemId={item?.id}
               currentParentId={currentParentId}
             />
-            {targetId === null && <Text className={styles.errorText}>Please select a destination folder.</Text>}
-            {isCopyingIntoSelf(targetId) && <Text className={styles.errorText}>Cannot copy item into itself or its subfolder.</Text>}
+            {targetId === null && (
+              <Text className={styles.errorText}>
+                Please select a destination folder.
+              </Text>
+            )}
+            {isCopyingIntoSelf(targetId) && (
+              <Text className={styles.errorText}>
+                Cannot copy item into itself or its subfolder.
+              </Text>
+            )}
           </DialogContent>
           <DialogActions>
-            <Button appearance="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
+            <Button appearance="secondary" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
             <Button
               appearance="primary"
               onClick={handleCopy}
-              disabled={loading || targetId === null || isCopyingIntoSelf(targetId)}
+              disabled={
+                loading || targetId === null || isCopyingIntoSelf(targetId)
+              }
             >
-              {loading ? <Spinner size="tiny" /> : 'Copy'}
+              {loading ? <Spinner size="tiny" /> : "Copy"}
             </Button>
           </DialogActions>
         </DialogBody>
@@ -330,25 +424,34 @@ interface ChangePasswordDialogProps {
   onSubmit: (current: string, next: string) => Promise<void>;
 }
 
-export function ChangePasswordDialog({ open, onClose, onSubmit }: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({
+  open,
+  onClose,
+  onSubmit,
+}: ChangePasswordDialogProps) {
   const styles = useStyles();
-  const [current, setCurrent] = useState('');
-  const [next, setNext] = useState('');
-  const [confirm, setConfirm] = useState('');
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (next !== confirm) { setError('Passwords do not match'); return; }
+    if (next !== confirm) {
+      setError("Passwords do not match");
+      return;
+    }
     setLoading(true);
-    setError('');
+    setError("");
     try {
       await onSubmit(current, next);
-      setCurrent(''); setNext(''); setConfirm('');
+      setCurrent("");
+      setNext("");
+      setConfirm("");
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed');
+      setError(err instanceof Error ? err.message : "Failed");
     } finally {
       setLoading(false);
     }
@@ -362,20 +465,39 @@ export function ChangePasswordDialog({ open, onClose, onSubmit }: ChangePassword
             <DialogTitle>Change Password</DialogTitle>
             <DialogContent className={styles.dialogContent}>
               <Field label="Current password">
-                <Input type="password" value={current} onChange={(_, d) => setCurrent(d.value)} autoFocus />
+                <Input
+                  type="password"
+                  value={current}
+                  onChange={(_, d) => setCurrent(d.value)}
+                  autoFocus
+                />
               </Field>
               <Field label="New password">
-                <Input type="password" value={next} onChange={(_, d) => setNext(d.value)} />
+                <Input
+                  type="password"
+                  value={next}
+                  onChange={(_, d) => setNext(d.value)}
+                />
               </Field>
               <Field label="Confirm new password">
-                <Input type="password" value={confirm} onChange={(_, d) => setConfirm(d.value)} />
+                <Input
+                  type="password"
+                  value={confirm}
+                  onChange={(_, d) => setConfirm(d.value)}
+                />
               </Field>
               {error && <Text className={styles.errorText}>{error}</Text>}
             </DialogContent>
             <DialogActions>
-              <Button appearance="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
+              <Button
+                appearance="secondary"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
               <Button appearance="primary" type="submit" disabled={loading}>
-                {loading ? <Spinner size="tiny" /> : 'Change password'}
+                {loading ? <Spinner size="tiny" /> : "Change password"}
               </Button>
             </DialogActions>
           </DialogBody>

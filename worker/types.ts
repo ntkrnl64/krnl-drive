@@ -8,7 +8,7 @@ export interface Env {
 export interface User {
   id: string;
   username: string;
-  role: 'admin' | 'user' | 'guest';
+  role: "admin" | "user" | "guest";
   disabled: number;
   totp_enabled: number;
   default_share_title: string | null;
@@ -36,7 +36,7 @@ export interface FileItem {
   id: string;
   name: string;
   parent_id: string | null;
-  type: 'file' | 'folder';
+  type: "file" | "folder";
   size: number;
   mime_type: string | null;
   r2_key: string | null;

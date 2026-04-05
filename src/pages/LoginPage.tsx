@@ -1,58 +1,74 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Button, Input, Field, Title1, Text, Spinner, Card,
-  Divider, Toast, Toaster, useToastController,
-  Tab, TabList, MessageBar, MessageBarBody, makeStyles
-} from '@fluentui/react-components';
+  Button,
+  Input,
+  Field,
+  Title1,
+  Text,
+  Spinner,
+  Card,
+  Divider,
+  Toast,
+  Toaster,
+  useToastController,
+  Tab,
+  TabList,
+  MessageBar,
+  MessageBarBody,
+  makeStyles,
+} from "@fluentui/react-components";
 import {
-  KeyRegular, PersonRegular, LockClosedRegular, FingerprintRegular,
+  KeyRegular,
+  PersonRegular,
+  LockClosedRegular,
+  FingerprintRegular,
   ShieldKeyholeRegular,
-} from '@fluentui/react-icons';
-import { useAuth } from '../contexts/AuthContext.tsx';
-import { authApi } from '../api.ts';
-import { startAuthentication } from '@simplewebauthn/browser';
-import type { AuthenticationResponseJSON } from '@simplewebauthn/types';
+} from "@fluentui/react-icons";
+import { useAuth } from "../contexts/AuthContext.tsx";
+import { authApi } from "../api.ts";
+import { startAuthentication } from "@simplewebauthn/browser";
+import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
 
 const useStyles = makeStyles({
   root: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'var(--colorNeutralBackground2)',
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "var(--colorNeutralBackground2)",
   },
   card: {
-    width: '400px',
-    paddingTop: '32px',
-    paddingBottom: '32px',
-    paddingLeft: '32px',
-    paddingRight: '32px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '24px',
+    width: "400px",
+    paddingTop: "32px",
+    paddingBottom: "32px",
+    paddingLeft: "32px",
+    paddingRight: "32px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px",
   },
   header: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   icon: {
-    fontSize: '40px',
-    marginBottom: '8px',
+    fontSize: "40px",
+    marginBottom: "8px",
   },
   subText: {
-    color: 'var(--colorNeutralForeground3)',
+    color: "var(--colorNeutralForeground3)",
   },
   form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
   },
   errorText: {
-    color: 'var(--colorPaletteRedForeground1)',
-  }
+    color: "var(--colorPaletteRedForeground1)",
+  },
 });
 
-type Step = 'credentials' | 'totp' | 'recovery';
+type Step = "credentials" | "totp" | "recovery";
 
 export default function LoginPage() {
   const styles = useStyles();
@@ -60,21 +76,25 @@ export default function LoginPage() {
   const { dispatchToast } = useToastController();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? '/';
+  const from = (location.state as { from?: string } | null)?.from ?? "/";
 
-  const [step, setStep] = useState<Step>('credentials');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
+  const [step, setStep] = useState<Step>("credentials");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [available2fa, setAvailable2fa] = useState<string[]>([]);
 
   const showError = (msg: string) => {
     setError(msg);
     dispatchToast(
-      <Toast><MessageBar intent="error"><MessageBarBody>{msg}</MessageBarBody></MessageBar></Toast>,
-      { intent: 'error' }
+      <Toast>
+        <MessageBar intent="error">
+          <MessageBarBody>{msg}</MessageBarBody>
+        </MessageBar>
+      </Toast>,
+      { intent: "error" },
     );
   };
 
@@ -85,18 +105,18 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
     try {
       const res = await login(username, password);
       if (res.requiresTwoFactor) {
-        setAvailable2fa(res.methods ?? ['totp']);
-        setStep('totp');
+        setAvailable2fa(res.methods ?? ["totp"]);
+        setStep("totp");
       } else {
         await goAfterLogin();
       }
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Login failed');
+      showError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -104,13 +124,13 @@ export default function LoginPage() {
 
   const handleTotpVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
     try {
       await authApi.verifyTotp(code);
       await goAfterLogin();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Invalid code');
+      showError(err instanceof Error ? err.message : "Invalid code");
     } finally {
       setLoading(false);
     }
@@ -118,28 +138,37 @@ export default function LoginPage() {
 
   const handleRecoveryVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
     try {
       await authApi.verifyRecovery(code);
       await goAfterLogin();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Invalid recovery code');
+      showError(err instanceof Error ? err.message : "Invalid recovery code");
     } finally {
       setLoading(false);
     }
   };
 
   const handlePasskeyLogin = async () => {
-    setError('');
+    setError("");
     setLoading(true);
     try {
       const beginRes = await authApi.passkeyAuthBegin(username || undefined);
-      const response = await startAuthentication({ optionsJSON: beginRes.options as Parameters<typeof startAuthentication>[0]['optionsJSON'] });
-      await authApi.passkeyAuthComplete(beginRes.challengeId, response as unknown as AuthenticationResponseJSON);
+      const response = await startAuthentication({
+        optionsJSON: beginRes.options as Parameters<
+          typeof startAuthentication
+        >[0]["optionsJSON"],
+      });
+      await authApi.passkeyAuthComplete(
+        beginRes.challengeId,
+        response as unknown as AuthenticationResponseJSON,
+      );
       await goAfterLogin();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Passkey authentication failed');
+      showError(
+        err instanceof Error ? err.message : "Passkey authentication failed",
+      );
     } finally {
       setLoading(false);
     }
@@ -158,13 +187,15 @@ export default function LoginPage() {
 
         {/* Row 2: Step label + form */}
         <Text className={styles.subText}>
-          {step === 'credentials' ? 'Sign in to your account'
-            : step === 'totp' ? 'Two-factor authentication'
-            : 'Enter recovery code'}
+          {step === "credentials"
+            ? "Sign in to your account"
+            : step === "totp"
+              ? "Two-factor authentication"
+              : "Enter recovery code"}
         </Text>
 
         {/* Credentials step */}
-        {step === 'credentials' && (
+        {step === "credentials" && (
           <form onSubmit={handleLogin} className={styles.form}>
             <Field label="Username">
               <Input
@@ -187,8 +218,13 @@ export default function LoginPage() {
               />
             </Field>
             {error && <Text className={styles.errorText}>{error}</Text>}
-            <Button appearance="primary" type="submit" disabled={loading} icon={loading ? <Spinner size="tiny" /> : undefined}>
-              {loading ? 'Signing in...' : 'Sign in'}
+            <Button
+              appearance="primary"
+              type="submit"
+              disabled={loading}
+              icon={loading ? <Spinner size="tiny" /> : undefined}
+            >
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
             <Divider>or</Divider>
             <Button
@@ -203,20 +239,31 @@ export default function LoginPage() {
         )}
 
         {/* TOTP step */}
-        {step === 'totp' && (
+        {step === "totp" && (
           <>
             <TabList
-              selectedValue={step === 'totp' ? 'totp' : 'recovery'}
+              selectedValue={step === "totp" ? "totp" : "recovery"}
               onTabSelect={(_, d) => setStep(d.value as Step)}
             >
-              {available2fa.includes('totp') && <Tab value="totp" icon={<ShieldKeyholeRegular />}>Authenticator</Tab>}
-              {available2fa.includes('recovery') && <Tab value="recovery" icon={<KeyRegular />}>Recovery Code</Tab>}
+              {available2fa.includes("totp") && (
+                <Tab value="totp" icon={<ShieldKeyholeRegular />}>
+                  Authenticator
+                </Tab>
+              )}
+              {available2fa.includes("recovery") && (
+                <Tab value="recovery" icon={<KeyRegular />}>
+                  Recovery Code
+                </Tab>
+              )}
             </TabList>
             <form onSubmit={handleTotpVerify} className={styles.form}>
-              <Field label="6-digit code" hint="Enter the code from your authenticator app">
+              <Field
+                label="6-digit code"
+                hint="Enter the code from your authenticator app"
+              >
                 <Input
                   value={code}
-                  onChange={(_, d) => setCode(d.value.replace(/\s/g, ''))}
+                  onChange={(_, d) => setCode(d.value.replace(/\s/g, ""))}
                   placeholder="000000"
                   maxLength={6}
                   pattern="\d{6}"
@@ -225,10 +272,20 @@ export default function LoginPage() {
                 />
               </Field>
               {error && <Text className={styles.errorText}>{error}</Text>}
-              <Button appearance="primary" type="submit" disabled={loading || code.length !== 6}>
-                {loading ? <Spinner size="tiny" /> : 'Verify'}
+              <Button
+                appearance="primary"
+                type="submit"
+                disabled={loading || code.length !== 6}
+              >
+                {loading ? <Spinner size="tiny" /> : "Verify"}
               </Button>
-              <Button appearance="subtle" onClick={() => { setStep('recovery'); setCode(''); }}>
+              <Button
+                appearance="subtle"
+                onClick={() => {
+                  setStep("recovery");
+                  setCode("");
+                }}
+              >
                 Use recovery code instead
               </Button>
             </form>
@@ -236,9 +293,12 @@ export default function LoginPage() {
         )}
 
         {/* Recovery step */}
-        {step === 'recovery' && (
+        {step === "recovery" && (
           <form onSubmit={handleRecoveryVerify} className={styles.form}>
-            <Field label="Recovery code" hint="Enter one of your 8-character recovery codes">
+            <Field
+              label="Recovery code"
+              hint="Enter one of your 8-character recovery codes"
+            >
               <Input
                 contentBefore={<KeyRegular />}
                 value={code}
@@ -248,17 +308,34 @@ export default function LoginPage() {
               />
             </Field>
             {error && <Text className={styles.errorText}>{error}</Text>}
-            <Button appearance="primary" type="submit" disabled={loading || !code}>
-              {loading ? <Spinner size="tiny" /> : 'Verify'}
+            <Button
+              appearance="primary"
+              type="submit"
+              disabled={loading || !code}
+            >
+              {loading ? <Spinner size="tiny" /> : "Verify"}
             </Button>
-            <Button appearance="subtle" onClick={() => { setStep('totp'); setCode(''); }}>
+            <Button
+              appearance="subtle"
+              onClick={() => {
+                setStep("totp");
+                setCode("");
+              }}
+            >
               Use authenticator app instead
             </Button>
           </form>
         )}
 
-        {step !== 'credentials' && (
-          <Button appearance="subtle" onClick={() => { setStep('credentials'); setCode(''); setError(''); }}>
+        {step !== "credentials" && (
+          <Button
+            appearance="subtle"
+            onClick={() => {
+              setStep("credentials");
+              setCode("");
+              setError("");
+            }}
+          >
             Back to login
           </Button>
         )}

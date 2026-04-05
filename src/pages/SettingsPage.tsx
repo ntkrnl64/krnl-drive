@@ -1,129 +1,159 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
-  Title2, Text, Button, Field, Input, Spinner, Card, Avatar,
-  Divider, Badge, Accordion, AccordionItem, AccordionHeader,
-  AccordionPanel, Toast, useToastController,
-  MessageBar, MessageBarBody, Table, TableHeader, TableRow, TableHeaderCell,
-  TableBody, TableCell, TableCellLayout, makeStyles, shorthands,
-} from '@fluentui/react-components';
+  Title2,
+  Text,
+  Button,
+  Field,
+  Input,
+  Spinner,
+  Card,
+  Avatar,
+  Divider,
+  Badge,
+  Accordion,
+  AccordionItem,
+  AccordionHeader,
+  AccordionPanel,
+  Toast,
+  useToastController,
+  MessageBar,
+  MessageBarBody,
+  Table,
+  TableHeader,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+  TableCellLayout,
+  makeStyles,
+  shorthands,
+} from "@fluentui/react-components";
 import {
-  ShieldCheckmarkRegular, KeyRegular, FingerprintRegular, CopyRegular,
-  DeleteRegular, CheckmarkRegular, AddRegular, LockClosedRegular, LinkRegular, PersonRegular
-} from '@fluentui/react-icons';
-import { useAuth } from '../contexts/AuthContext.tsx';
-import { authApi } from '../api.ts';
-import { startRegistration } from '@simplewebauthn/browser';
-import type { RegistrationResponseJSON } from '@simplewebauthn/types';
-import type { Passkey } from '../types.ts';
-import { ChangePasswordDialog } from '../components/Dialogs.tsx';
+  ShieldCheckmarkRegular,
+  KeyRegular,
+  FingerprintRegular,
+  CopyRegular,
+  DeleteRegular,
+  CheckmarkRegular,
+  AddRegular,
+  LockClosedRegular,
+  LinkRegular,
+  PersonRegular,
+} from "@fluentui/react-icons";
+import { useAuth } from "../contexts/AuthContext.tsx";
+import { authApi } from "../api.ts";
+import { startRegistration } from "@simplewebauthn/browser";
+import type { RegistrationResponseJSON } from "@simplewebauthn/types";
+import type { Passkey } from "../types.ts";
+import { ChangePasswordDialog } from "../components/Dialogs.tsx";
 
 const useStyles = makeStyles({
   root: {
-    maxWidth: '720px',
-    margin: '0 auto',
-    ...shorthands.padding('24px', '16px'),
+    maxWidth: "720px",
+    margin: "0 auto",
+    ...shorthands.padding("24px", "16px"),
   },
   title: {
-    marginBottom: '24px',
+    marginBottom: "24px",
   },
   card: {
-    marginBottom: '16px',
+    marginBottom: "16px",
   },
   cardContent: {
-    ...shorthands.padding('16px'),
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
+    ...shorthands.padding("16px"),
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
   },
   cardContentLargeGap: {
-    ...shorthands.padding('16px'),
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
+    ...shorthands.padding("16px"),
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
   },
   alignStart: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   headerContent: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
   },
   qrContainer: {
-    backgroundColor: 'white',
-    ...shorthands.padding('16px'),
-    ...shorthands.borderRadius('8px'),
-    textAlign: 'center',
-    ...shorthands.border('1px', 'solid', 'var(--colorNeutralStroke2)'),
+    backgroundColor: "white",
+    ...shorthands.padding("16px"),
+    ...shorthands.borderRadius("8px"),
+    textAlign: "center",
+    ...shorthands.border("1px", "solid", "var(--colorNeutralStroke2)"),
   },
   qrImage: {
-    width: '200px',
-    height: '200px',
+    width: "200px",
+    height: "200px",
   },
   secretContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
   },
   secretText: {
-    fontFamily: 'monospace',
-    letterSpacing: '2px',
+    fontFamily: "monospace",
+    letterSpacing: "2px",
   },
   inputGroup: {
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'flex-end',
+    display: "flex",
+    gap: "8px",
+    alignItems: "flex-end",
   },
   flex1: {
     flexGrow: 1,
   },
   successText: {
-    color: 'var(--colorPaletteGreenForeground1)',
+    color: "var(--colorPaletteGreenForeground1)",
   },
   dangerButton: {
-    backgroundColor: 'var(--colorPaletteRedBackground3)',
-    color: 'white',
-    '&:hover': {
-      backgroundColor: 'var(--colorPaletteRedBackground3Hover)',
-      color: 'white',
+    backgroundColor: "var(--colorPaletteRedBackground3)",
+    color: "white",
+    "&:hover": {
+      backgroundColor: "var(--colorPaletteRedBackground3Hover)",
+      color: "white",
     },
-    '&:active': {
-      backgroundColor: 'var(--colorPaletteRedBackground3Pressed)',
-      color: 'white',
-    }
+    "&:active": {
+      backgroundColor: "var(--colorPaletteRedBackground3Pressed)",
+      color: "white",
+    },
   },
   recoveryCodesContainer: {
-    backgroundColor: 'var(--colorNeutralBackground3)',
-    ...shorthands.borderRadius('8px'),
-    ...shorthands.padding('16px'),
+    backgroundColor: "var(--colorNeutralBackground3)",
+    ...shorthands.borderRadius("8px"),
+    ...shorthands.padding("16px"),
   },
   recoveryWarning: {
-    marginBottom: '8px',
+    marginBottom: "8px",
   },
   recoverySubWarning: {
-    color: 'var(--colorNeutralForeground3)',
-    marginBottom: '12px',
+    color: "var(--colorNeutralForeground3)",
+    marginBottom: "12px",
   },
   codesGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '4px',
-    marginBottom: '12px',
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "4px",
+    marginBottom: "12px",
   },
   codeText: {
-    fontFamily: 'monospace',
-    fontSize: '13px',
+    fontFamily: "monospace",
+    fontSize: "13px",
   },
   emptyText: {
-    color: 'var(--colorNeutralForeground3)',
+    color: "var(--colorNeutralForeground3)",
   },
   columnWidth60: {
-    width: '60px',
+    width: "60px",
   },
   avatarPreviewRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
   },
 });
 
@@ -153,21 +183,24 @@ export default function SettingsPage() {
   const [loadingPasskeys, setLoadingPasskeys] = useState(false);
 
   // TOTP setup state
-  const [totpSetupData, setTotpSetupData] = useState<{ secret: string; uri: string } | null>(null);
-  const [totpCode, setTotpCode] = useState('');
+  const [totpSetupData, setTotpSetupData] = useState<{
+    secret: string;
+    uri: string;
+  } | null>(null);
+  const [totpCode, setTotpCode] = useState("");
   const [totpLoading, setTotpLoading] = useState(false);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
-  const [disableTotpCode, setDisableTotpCode] = useState('');
+  const [disableTotpCode, setDisableTotpCode] = useState("");
 
   // Passkey state
-  const [passkeyName, setPasskeyName] = useState('');
+  const [passkeyName, setPasskeyName] = useState("");
   const [addingPasskey, setAddingPasskey] = useState(false);
 
   // Password dialog
   const [pwDialogOpen, setPwDialogOpen] = useState(false);
 
   // Avatar
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url ?? '');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url ?? "");
   const [savingAvatar, setSavingAvatar] = useState(false);
 
   const handleSaveAvatar = async () => {
@@ -175,17 +208,21 @@ export default function SettingsPage() {
     try {
       await authApi.updateMe({ avatarUrl: avatarUrl.trim() || null });
       await refresh();
-      toast('Avatar updated');
+      toast("Avatar updated");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed', 'error');
+      toast(e instanceof Error ? e.message : "Failed", "error");
     } finally {
       setSavingAvatar(false);
     }
   };
 
   // User share defaults
-  const [defaultShareTitle, setDefaultShareTitle] = useState(user?.default_share_title ?? '');
-  const [defaultShareDescription, setDefaultShareDescription] = useState(user?.default_share_description ?? '');
+  const [defaultShareTitle, setDefaultShareTitle] = useState(
+    user?.default_share_title ?? "",
+  );
+  const [defaultShareDescription, setDefaultShareDescription] = useState(
+    user?.default_share_description ?? "",
+  );
   const [savingDefaults, setSavingDefaults] = useState(false);
 
   const handleSaveDefaults = async () => {
@@ -196,20 +233,22 @@ export default function SettingsPage() {
         defaultShareDescription: defaultShareDescription.trim() || null,
       });
       await refresh();
-      toast('Share defaults updated');
+      toast("Share defaults updated");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed to update', 'error');
+      toast(e instanceof Error ? e.message : "Failed to update", "error");
     } finally {
       setSavingDefaults(false);
     }
   };
 
-  const toast = (msg: string, intent: 'success' | 'error' = 'success') =>
+  const toast = (msg: string, intent: "success" | "error" = "success") =>
     dispatchToast(
       <Toast>
-        <MessageBar intent={intent}><MessageBarBody>{msg}</MessageBarBody></MessageBar>
+        <MessageBar intent={intent}>
+          <MessageBarBody>{msg}</MessageBarBody>
+        </MessageBar>
       </Toast>,
-      { intent }
+      { intent },
     );
 
   const loadPasskeys = async () => {
@@ -222,7 +261,9 @@ export default function SettingsPage() {
     }
   };
 
-  useEffect(() => { void loadPasskeys(); }, []);
+  useEffect(() => {
+    void loadPasskeys();
+  }, []);
 
   // ─── TOTP ────────────────────────────────────────────────────────────────────
   const handleTotpSetup = async () => {
@@ -231,7 +272,7 @@ export default function SettingsPage() {
       const res = await authApi.setupTotp();
       setTotpSetupData(res);
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed', 'error');
+      toast(e instanceof Error ? e.message : "Failed", "error");
     } finally {
       setTotpLoading(false);
     }
@@ -243,11 +284,11 @@ export default function SettingsPage() {
       const res = await authApi.verifyTotpSetup(totpCode);
       setRecoveryCodes(res.recoveryCodes);
       setTotpSetupData(null);
-      setTotpCode('');
+      setTotpCode("");
       await refresh();
-      toast('Two-factor authentication enabled!');
+      toast("Two-factor authentication enabled!");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Invalid code', 'error');
+      toast(e instanceof Error ? e.message : "Invalid code", "error");
     } finally {
       setTotpLoading(false);
     }
@@ -257,11 +298,11 @@ export default function SettingsPage() {
     setTotpLoading(true);
     try {
       await authApi.disableTotp(disableTotpCode);
-      setDisableTotpCode('');
+      setDisableTotpCode("");
       await refresh();
-      toast('Two-factor authentication disabled');
+      toast("Two-factor authentication disabled");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed', 'error');
+      toast(e instanceof Error ? e.message : "Failed", "error");
     } finally {
       setTotpLoading(false);
     }
@@ -271,9 +312,9 @@ export default function SettingsPage() {
     try {
       const res = await authApi.regenerateRecoveryCodes();
       setRecoveryCodes(res.codes);
-      toast('Recovery codes regenerated');
+      toast("Recovery codes regenerated");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed', 'error');
+      toast(e instanceof Error ? e.message : "Failed", "error");
     }
   };
 
@@ -282,13 +323,21 @@ export default function SettingsPage() {
     setAddingPasskey(true);
     try {
       const begin = await authApi.passkeyRegisterBegin();
-      const response = await startRegistration({ optionsJSON: begin.options as Parameters<typeof startRegistration>[0]['optionsJSON'] });
-      await authApi.passkeyRegisterComplete(begin.challengeId, response as unknown as RegistrationResponseJSON, passkeyName || 'My Passkey');
-      setPasskeyName('');
+      const response = await startRegistration({
+        optionsJSON: begin.options as Parameters<
+          typeof startRegistration
+        >[0]["optionsJSON"],
+      });
+      await authApi.passkeyRegisterComplete(
+        begin.challengeId,
+        response as unknown as RegistrationResponseJSON,
+        passkeyName || "My Passkey",
+      );
+      setPasskeyName("");
       await loadPasskeys();
-      toast('Passkey added successfully!');
+      toast("Passkey added successfully!");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed to add passkey', 'error');
+      toast(e instanceof Error ? e.message : "Failed to add passkey", "error");
     } finally {
       setAddingPasskey(false);
     }
@@ -298,18 +347,20 @@ export default function SettingsPage() {
     try {
       await authApi.deletePasskey(id);
       await loadPasskeys();
-      toast('Passkey removed');
+      toast("Passkey removed");
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Failed', 'error');
+      toast(e instanceof Error ? e.message : "Failed", "error");
     }
   };
 
-  if (user?.role === 'guest') {
+  if (user?.role === "guest") {
     return (
       <div className={styles.root}>
         <Title2 className={styles.title}>Account Settings</Title2>
         <MessageBar intent="warning">
-          <MessageBarBody>Guest accounts cannot modify account settings.</MessageBarBody>
+          <MessageBarBody>
+            Guest accounts cannot modify account settings.
+          </MessageBarBody>
         </MessageBar>
       </div>
     );
@@ -319,8 +370,7 @@ export default function SettingsPage() {
     <div className={styles.root}>
       <Title2 className={styles.title}>Account Settings</Title2>
 
-      <Accordion collapsible multiple defaultOpenItems={['password', 'totp']}>
-
+      <Accordion collapsible multiple defaultOpenItems={["password", "totp"]}>
         {/* Avatar */}
         <AccordionItem value="avatar">
           <AccordionHeader icon={<PersonRegular />}>
@@ -335,8 +385,12 @@ export default function SettingsPage() {
                     image={avatarUrl ? { src: avatarUrl } : undefined}
                     size={64}
                   />
-                  <Text size={200} style={{ color: 'var(--colorNeutralForeground3)' }}>
-                    Enter a URL to use as your profile picture. Shown on share pages.
+                  <Text
+                    size={200}
+                    style={{ color: "var(--colorNeutralForeground3)" }}
+                  >
+                    Enter a URL to use as your profile picture. Shown on share
+                    pages.
                   </Text>
                 </div>
                 <Field label="Avatar URL">
@@ -348,9 +402,17 @@ export default function SettingsPage() {
                 </Field>
                 <Button
                   appearance="primary"
-                  icon={savingAvatar ? <Spinner size="tiny" /> : <CheckmarkRegular />}
+                  icon={
+                    savingAvatar ? (
+                      <Spinner size="tiny" />
+                    ) : (
+                      <CheckmarkRegular />
+                    )
+                  }
                   onClick={handleSaveAvatar}
-                  disabled={savingAvatar || avatarUrl === (user?.avatar_url ?? '')}
+                  disabled={
+                    savingAvatar || avatarUrl === (user?.avatar_url ?? "")
+                  }
                   className={styles.alignStart}
                 >
                   Save Avatar
@@ -389,7 +451,9 @@ export default function SettingsPage() {
           <AccordionPanel>
             <Card className={styles.card}>
               <div className={styles.cardContentLargeGap}>
-                <Text>Configure default title and description for your share links.</Text>
+                <Text>
+                  Configure default title and description for your share links.
+                </Text>
                 <Field label="Default Share Title">
                   <Input
                     value={defaultShareTitle}
@@ -406,9 +470,20 @@ export default function SettingsPage() {
                 </Field>
                 <Button
                   appearance="primary"
-                  icon={savingDefaults ? <Spinner size="tiny" /> : <CheckmarkRegular />}
+                  icon={
+                    savingDefaults ? (
+                      <Spinner size="tiny" />
+                    ) : (
+                      <CheckmarkRegular />
+                    )
+                  }
                   onClick={handleSaveDefaults}
-                  disabled={savingDefaults || (defaultShareTitle === (user?.default_share_title ?? '') && defaultShareDescription === (user?.default_share_description ?? ''))}
+                  disabled={
+                    savingDefaults ||
+                    (defaultShareTitle === (user?.default_share_title ?? "") &&
+                      defaultShareDescription ===
+                        (user?.default_share_description ?? ""))
+                  }
                   className={styles.alignStart}
                 >
                   Save Defaults
@@ -423,8 +498,11 @@ export default function SettingsPage() {
           <AccordionHeader icon={<ShieldCheckmarkRegular />}>
             <div className={styles.headerContent}>
               <Text weight="semibold">Two-Factor Authentication (TOTP)</Text>
-              <Badge color={user?.totp_enabled ? 'success' : 'subtle'} size="small">
-                {user?.totp_enabled ? 'Enabled' : 'Disabled'}
+              <Badge
+                color={user?.totp_enabled ? "success" : "subtle"}
+                size="small"
+              >
+                {user?.totp_enabled ? "Enabled" : "Disabled"}
               </Badge>
             </div>
           </AccordionHeader>
@@ -433,10 +511,20 @@ export default function SettingsPage() {
               <div className={styles.cardContentLargeGap}>
                 {!user?.totp_enabled && !totpSetupData && (
                   <>
-                    <Text>Protect your account with a time-based one-time password (TOTP) authenticator app like Google Authenticator or Authy.</Text>
+                    <Text>
+                      Protect your account with a time-based one-time password
+                      (TOTP) authenticator app like Google Authenticator or
+                      Authy.
+                    </Text>
                     <Button
                       appearance="primary"
-                      icon={totpLoading ? <Spinner size="tiny" /> : <ShieldCheckmarkRegular />}
+                      icon={
+                        totpLoading ? (
+                          <Spinner size="tiny" />
+                        ) : (
+                          <ShieldCheckmarkRegular />
+                        )
+                      }
                       onClick={handleTotpSetup}
                       disabled={totpLoading}
                       className={styles.alignStart}
@@ -448,7 +536,9 @@ export default function SettingsPage() {
 
                 {totpSetupData && (
                   <div className={styles.cardContent}>
-                    <Text weight="semibold">1. Scan the QR code or enter the key manually</Text>
+                    <Text weight="semibold">
+                      1. Scan the QR code or enter the key manually
+                    </Text>
                     <div className={styles.qrContainer}>
                       <img
                         src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(totpSetupData.uri)}&size=200x200`}
@@ -465,12 +555,16 @@ export default function SettingsPage() {
 
                     <Divider />
 
-                    <Text weight="semibold">2. Enter the 6-digit code from your app</Text>
+                    <Text weight="semibold">
+                      2. Enter the 6-digit code from your app
+                    </Text>
                     <div className={styles.inputGroup}>
                       <Field label="Verification code" className={styles.flex1}>
                         <Input
                           value={totpCode}
-                          onChange={(_, d) => setTotpCode(d.value.replace(/\D/g, ''))}
+                          onChange={(_, d) =>
+                            setTotpCode(d.value.replace(/\D/g, ""))
+                          }
                           placeholder="000000"
                           maxLength={6}
                           inputMode="numeric"
@@ -481,10 +575,19 @@ export default function SettingsPage() {
                         onClick={handleTotpVerify}
                         disabled={totpLoading || totpCode.length !== 6}
                       >
-                        {totpLoading ? <Spinner size="tiny" /> : 'Verify & Enable'}
+                        {totpLoading ? (
+                          <Spinner size="tiny" />
+                        ) : (
+                          "Verify & Enable"
+                        )}
                       </Button>
                     </div>
-                    <Button appearance="subtle" onClick={() => setTotpSetupData(null)}>Cancel</Button>
+                    <Button
+                      appearance="subtle"
+                      onClick={() => setTotpSetupData(null)}
+                    >
+                      Cancel
+                    </Button>
                   </div>
                 )}
 
@@ -498,10 +601,15 @@ export default function SettingsPage() {
 
                     <Text weight="semibold">Disable 2FA</Text>
                     <div className={styles.inputGroup}>
-                      <Field label="Enter current TOTP code to disable" className={styles.flex1}>
+                      <Field
+                        label="Enter current TOTP code to disable"
+                        className={styles.flex1}
+                      >
                         <Input
                           value={disableTotpCode}
-                          onChange={(_, d) => setDisableTotpCode(d.value.replace(/\D/g, ''))}
+                          onChange={(_, d) =>
+                            setDisableTotpCode(d.value.replace(/\D/g, ""))
+                          }
                           placeholder="000000"
                           maxLength={6}
                         />
@@ -530,25 +638,44 @@ export default function SettingsPage() {
 
                 {recoveryCodes.length > 0 && (
                   <div className={styles.recoveryCodesContainer}>
-                    <Text weight="semibold" block className={styles.recoveryWarning}>
+                    <Text
+                      weight="semibold"
+                      block
+                      className={styles.recoveryWarning}
+                    >
                       Save these recovery codes in a safe place!
                     </Text>
-                    <Text size={200} block className={styles.recoverySubWarning}>
-                      Each code can only be used once. They will not be shown again.
+                    <Text
+                      size={200}
+                      block
+                      className={styles.recoverySubWarning}
+                    >
+                      Each code can only be used once. They will not be shown
+                      again.
                     </Text>
                     <div className={styles.codesGrid}>
-                      {recoveryCodes.map(code => (
-                        <Text key={code} className={styles.codeText}>{code}</Text>
+                      {recoveryCodes.map((code) => (
+                        <Text key={code} className={styles.codeText}>
+                          {code}
+                        </Text>
                       ))}
                     </div>
                     <Button
                       size="small"
                       icon={<CopyRegular />}
-                      onClick={() => void navigator.clipboard.writeText(recoveryCodes.join('\n'))}
+                      onClick={() =>
+                        void navigator.clipboard.writeText(
+                          recoveryCodes.join("\n"),
+                        )
+                      }
                     >
                       Copy all codes
                     </Button>
-                    <Button size="small" appearance="subtle" onClick={() => setRecoveryCodes([])}>
+                    <Button
+                      size="small"
+                      appearance="subtle"
+                      onClick={() => setRecoveryCodes([])}
+                    >
                       I've saved these codes
                     </Button>
                   </div>
@@ -566,11 +693,17 @@ export default function SettingsPage() {
           <AccordionPanel>
             <Card className={styles.card}>
               <div className={styles.cardContentLargeGap}>
-                <Text>Passkeys let you sign in with biometrics or a hardware security key.</Text>
+                <Text>
+                  Passkeys let you sign in with biometrics or a hardware
+                  security key.
+                </Text>
 
                 {/* Add passkey */}
                 <div className={styles.inputGroup}>
-                  <Field label="Passkey name (optional)" className={styles.flex1}>
+                  <Field
+                    label="Passkey name (optional)"
+                    className={styles.flex1}
+                  >
                     <Input
                       value={passkeyName}
                       onChange={(_, d) => setPasskeyName(d.value)}
@@ -579,7 +712,9 @@ export default function SettingsPage() {
                   </Field>
                   <Button
                     appearance="primary"
-                    icon={addingPasskey ? <Spinner size="tiny" /> : <AddRegular />}
+                    icon={
+                      addingPasskey ? <Spinner size="tiny" /> : <AddRegular />
+                    }
                     onClick={handleAddPasskey}
                     disabled={addingPasskey}
                   >
@@ -588,14 +723,18 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Passkeys list */}
-                {loadingPasskeys ? <Spinner size="small" /> : (
+                {loadingPasskeys ? (
+                  <Spinner size="small" />
+                ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHeaderCell>Name</TableHeaderCell>
                         <TableHeaderCell>Created</TableHeaderCell>
                         <TableHeaderCell>Last used</TableHeaderCell>
-                        <TableHeaderCell className={styles.columnWidth60}></TableHeaderCell>
+                        <TableHeaderCell
+                          className={styles.columnWidth60}
+                        ></TableHeaderCell>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -603,35 +742,47 @@ export default function SettingsPage() {
                         <TableRow>
                           <TableCell colSpan={4}>
                             <TableCellLayout>
-                              <Text className={styles.emptyText}>No passkeys added yet</Text>
+                              <Text className={styles.emptyText}>
+                                No passkeys added yet
+                              </Text>
                             </TableCellLayout>
                           </TableCell>
                         </TableRow>
-                      ) : passkeys.map(pk => (
-                        <TableRow key={pk.id}>
-                          <TableCell><TableCellLayout>{pk.name}</TableCellLayout></TableCell>
-                          <TableCell>
-                            <TableCellLayout>
-                              {new Date(pk.created_at).toLocaleDateString()}
-                            </TableCellLayout>
-                          </TableCell>
-                          <TableCell>
-                            <TableCellLayout>
-                              {pk.last_used_at ? new Date(pk.last_used_at).toLocaleDateString() : '—'}
-                            </TableCellLayout>
-                          </TableCell>
-                          <TableCell>
-                            <TableCellLayout>
-                              <Button
-                                appearance="subtle"
-                                size="small"
-                                icon={<DeleteRegular />}
-                                onClick={() => void handleDeletePasskey(pk.id)}
-                              />
-                            </TableCellLayout>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      ) : (
+                        passkeys.map((pk) => (
+                          <TableRow key={pk.id}>
+                            <TableCell>
+                              <TableCellLayout>{pk.name}</TableCellLayout>
+                            </TableCell>
+                            <TableCell>
+                              <TableCellLayout>
+                                {new Date(pk.created_at).toLocaleDateString()}
+                              </TableCellLayout>
+                            </TableCell>
+                            <TableCell>
+                              <TableCellLayout>
+                                {pk.last_used_at
+                                  ? new Date(
+                                      pk.last_used_at,
+                                    ).toLocaleDateString()
+                                  : "—"}
+                              </TableCellLayout>
+                            </TableCell>
+                            <TableCell>
+                              <TableCellLayout>
+                                <Button
+                                  appearance="subtle"
+                                  size="small"
+                                  icon={<DeleteRegular />}
+                                  onClick={() =>
+                                    void handleDeletePasskey(pk.id)
+                                  }
+                                />
+                              </TableCellLayout>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 )}
@@ -644,7 +795,9 @@ export default function SettingsPage() {
       <ChangePasswordDialog
         open={pwDialogOpen}
         onClose={() => setPwDialogOpen(false)}
-        onSubmit={async (c, n) => { await authApi.changePassword(c, n); }}
+        onSubmit={async (c, n) => {
+          await authApi.changePassword(c, n);
+        }}
       />
     </div>
   );
