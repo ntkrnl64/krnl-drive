@@ -1,6 +1,36 @@
 import type { Context } from "hono";
 import type { Env, FileItem, HonoCtxVars } from "./types.ts";
 
+// File types that the browser would render as a live document (running
+// embedded scripts and fetching subresources from our origin). When a user
+// opens the inline-preview URL of one of these, we serve it as text/plain so
+// a malicious upload can't execute scripts in our origin's context.
+const SCRIPT_RISKY_MIMES = new Set([
+  "text/html",
+  "application/xhtml+xml",
+  "image/svg+xml",
+  "application/svg+xml",
+  "text/xml",
+  "application/xml",
+]);
+const SCRIPT_RISKY_EXTS = new Set(["html", "htm", "xhtml", "svg", "svgz"]);
+
+function getExt(name: string): string {
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(dot + 1).toLowerCase() : "";
+}
+
+function safeContentType(file: FileItem): string {
+  const raw = (file.mime_type ?? "application/octet-stream")
+    .toLowerCase()
+    .split(";")[0]
+    .trim();
+  if (SCRIPT_RISKY_MIMES.has(raw)) return "text/plain; charset=utf-8";
+  if (SCRIPT_RISKY_EXTS.has(getExt(file.name)))
+    return "text/plain; charset=utf-8";
+  return file.mime_type ?? "application/octet-stream";
+}
+
 // Stream an R2-backed file inline (Content-Disposition: inline) with HTTP Range
 // support so browsers can seek video/audio.
 export async function streamInline(
@@ -60,11 +90,22 @@ export async function streamInline(
     "Content-Disposition",
     `inline; filename*=UTF-8''${encodeURIComponent(file.name)}`,
   );
-  headers.set("Content-Type", file.mime_type ?? "application/octet-stream");
+  headers.set("Content-Type", safeContentType(file));
   headers.set("Content-Length", contentLength.toString());
   headers.set("Accept-Ranges", "bytes");
   headers.set("Cache-Control", "private, max-age=3600");
   if (contentRange) headers.set("Content-Range", contentRange);
+
+  // Defense-in-depth XSS hardening for inline-served user content:
+  //   - sandbox CSP makes the browser treat the response as a unique opaque
+  //     origin when rendered as a document, disabling scripts/forms even if
+  //     the Content-Type slips through as something executable.
+  //   - nosniff blocks the browser from MIME-sniffing risky types out of
+  //     bytes that look like HTML.
+  //   - SAMEORIGIN on framing keeps the inline preview out of attacker pages.
+  headers.set("Content-Security-Policy", "sandbox; default-src 'none'");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-Frame-Options", "SAMEORIGIN");
 
   return new Response(obj.body, { status, headers });
 }

@@ -214,7 +214,18 @@ export default function FilePreviewDialog({
     }
     if (previewType === "pdf") {
       return (
-        <iframe src={previewUrl} title={file.name} className={styles.iframe} />
+        <iframe
+          src={previewUrl}
+          title={file.name}
+          className={styles.iframe}
+          // The backend already responds with `Content-Security-Policy: sandbox`,
+          // so the document loads as an opaque origin with scripts disabled.
+          // We add an iframe-level sandbox too as belt-and-braces — empty value
+          // means "no exceptions": no scripts, no forms, no top-nav, etc. The
+          // browser's PDF viewer renders fine without any of that.
+          sandbox=""
+          referrerPolicy="no-referrer"
+        />
       );
     }
     if (previewType === "text") {
