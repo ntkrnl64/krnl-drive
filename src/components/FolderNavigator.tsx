@@ -99,7 +99,9 @@ export function FolderNavigator({
     initialFolderId,
   );
   const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+  });
 
   // Initialize selected folder with currentParentId if available, or initialFolderId
   useEffect(() => {

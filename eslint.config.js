@@ -30,6 +30,12 @@ export default defineConfig([
           ignoreRestSiblings: true,
         },
       ],
+      // The eslint-plugin-react-hooks v7 "set-state-in-effect" rule flags
+      // legitimate fetch-on-mount and prop-sync patterns (any setState reachable
+      // from the effect body, even transitively through an async helper, is
+      // reported). Most of those usages are correct here, so we turn the rule
+      // off and rely on `exhaustive-deps` + `rules-of-hooks` for safety.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
   {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogSurface,
@@ -260,12 +260,12 @@ export function MoveDialog({
   currentParentId,
 }: MoveDialogProps) {
   const styles = useStyles();
-  const [targetId, setTargetId] = useState<string | null>(null); // Initial state should be null
-
-  // Set initial targetId based on the current parent of the item being moved
-  useEffect(() => {
+  const [targetId, setTargetId] = useState<string | null>(currentParentId);
+  const [prevParent, setPrevParent] = useState(currentParentId);
+  if (prevParent !== currentParentId) {
+    setPrevParent(currentParentId);
     setTargetId(currentParentId);
-  }, [currentParentId]);
+  }
 
   const [loading, setLoading] = useState(false);
 
@@ -349,11 +349,12 @@ export function CopyDialog({
   currentParentId,
 }: CopyDialogProps) {
   const styles = useStyles();
-  const [targetId, setTargetId] = useState<string | null>(null);
-
-  useEffect(() => {
+  const [targetId, setTargetId] = useState<string | null>(currentParentId);
+  const [prevParent, setPrevParent] = useState(currentParentId);
+  if (prevParent !== currentParentId) {
+    setPrevParent(currentParentId);
     setTargetId(currentParentId);
-  }, [currentParentId]);
+  }
 
   const [loading, setLoading] = useState(false);
 

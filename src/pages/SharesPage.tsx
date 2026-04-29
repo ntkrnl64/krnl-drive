@@ -139,6 +139,7 @@ export default function SharesPage() {
 
   const [shares, setShares] = useState<(Share & { file_name?: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [renderedAt] = useState(() => Date.now());
 
   const toast = (msg: string, intent: "success" | "error" = "success") =>
     dispatchToast(
@@ -181,7 +182,7 @@ export default function SharesPage() {
   const downloadUrl = (token: string) => sharesApi.downloadUrl(token);
 
   const isExpired = (share: Share) =>
-    share.expires_at !== null && Date.now() > share.expires_at;
+    share.expires_at !== null && renderedAt > share.expires_at;
 
   const isLimitReached = (share: Share) =>
     (share.max_views !== null && share.view_count >= share.max_views) ||

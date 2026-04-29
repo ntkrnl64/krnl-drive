@@ -137,6 +137,7 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
   const { user } = useAuth();
   const [shares, setShares] = useState<Share[]>([]);
   const [loading, setLoading] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
   const [creating, setCreating] = useState(false);
   const [settings, setSettings] = useState<Record<string, string>>({});
 
@@ -206,7 +207,7 @@ export default function ShareDialog({ file, open, onClose }: ShareDialogProps) {
   const downloadUrl = (token: string) => `/api/share/${token}/download`;
 
   const isExpired = (share: Share) =>
-    share.expires_at !== null && Date.now() > share.expires_at;
+    share.expires_at !== null && renderedAt > share.expires_at;
 
   const isLimitReached = (share: Share) =>
     (share.max_views !== null && share.view_count >= share.max_views) ||
