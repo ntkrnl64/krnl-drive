@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "packageManager": "bun@1.0.0",
+  "packageManager": "bun@1.3.11",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -19,7 +19,7 @@
     "@simplewebauthn/browser": "^13.2.2",
     "@simplewebauthn/server": "^13.2.3",
     "@simplewebauthn/types": "^12.0.0",
-    "@siiway/prism": "file:../../siiway/prism-lib",
+    "@siiway/prism": "^0.1.11",
     "hono": "^4.12.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
