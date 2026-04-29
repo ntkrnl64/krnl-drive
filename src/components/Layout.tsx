@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Avatar,
   Button,
@@ -185,11 +185,13 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [prevPath, setPrevPath] = useState(location.pathname);
 
   // Close sidebar on route change for mobile
-  useEffect(() => {
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
     setSidebarOpen(false);
-  }, [location.pathname]);
+  }
 
   const handleLogout = async () => {
     await logout();

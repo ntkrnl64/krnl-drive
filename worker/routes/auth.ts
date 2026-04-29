@@ -456,7 +456,7 @@ auth.post("/passkey/register/complete", async (c) => {
     );
 
     return c.json({ ok: true });
-  } catch (e) {
+  } catch {
     return c.json({ error: "Verification failed" }, 400);
   }
 });
@@ -552,7 +552,7 @@ auth.post("/passkey/authenticate/complete", async (c) => {
     setSessionCookie(c, sessionToken);
 
     return c.json({ user });
-  } catch (e) {
+  } catch {
     return c.json({ error: "Verification failed" }, 401);
   }
 });

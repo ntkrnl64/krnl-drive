@@ -110,7 +110,6 @@ export function FolderNavigator({
       setSelectedFolderId(initialFolderId ?? null);
       onSelectRef.current(initialFolderId ?? null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFolderId, currentParentId]);
 
   const loadFolders = useCallback(

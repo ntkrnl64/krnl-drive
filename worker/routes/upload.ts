@@ -180,7 +180,7 @@ upload.post("/:sessionId/complete", requireAuth, async (c) => {
 
   try {
     await multipart.complete(parts);
-  } catch (e) {
+  } catch {
     await updateUploadSession(c.env.DB, session.id, { status: "failed" });
     return c.json({ error: "Failed to complete multipart upload" }, 500);
   }

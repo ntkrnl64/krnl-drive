@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Title2,
   Text,
@@ -127,7 +127,7 @@ export default function SharesPage() {
       { intent },
     );
 
-  const loadShares = async () => {
+  const loadShares = useCallback(async () => {
     setLoading(true);
     try {
       const res = await sharesApi.list();
@@ -137,11 +137,11 @@ export default function SharesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     void loadShares();
-  }, []);
+  }, [loadShares]);
 
   const handleDelete = async (id: string) => {
     try {

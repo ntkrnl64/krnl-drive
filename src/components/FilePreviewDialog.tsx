@@ -122,6 +122,13 @@ interface Props {
   downloadUrl: string | null;
 }
 
+interface TextState {
+  key: string;
+  status: "loading" | "loaded" | "error";
+  content: string;
+  error: string;
+}
+
 export default function FilePreviewDialog({
   open,
   onClose,
@@ -130,45 +137,61 @@ export default function FilePreviewDialog({
   downloadUrl,
 }: Props) {
   const styles = useStyles();
-  const [textContent, setTextContent] = useState<string | null>(null);
-  const [textLoading, setTextLoading] = useState(false);
-  const [textError, setTextError] = useState<string | null>(null);
+  const [textState, setTextState] = useState<TextState | null>(null);
 
   const previewType = file ? getPreviewType(file.mime_type, file.name) : null;
+  const isTextPreview = !!(
+    open &&
+    file &&
+    previewType === "text" &&
+    previewUrl
+  );
+  const tooLarge = !!(isTextPreview && file && file.size > TEXT_PREVIEW_LIMIT);
+  const textKey =
+    isTextPreview && !tooLarge && file && previewUrl
+      ? `${file.id}::${previewUrl}`
+      : null;
 
   useEffect(() => {
-    if (!open || !file || previewType !== "text" || !previewUrl) {
-      setTextContent(null);
-      setTextError(null);
-      setTextLoading(false);
-      return;
-    }
-    if (file.size > TEXT_PREVIEW_LIMIT) {
-      setTextContent(null);
-      setTextError(
-        `File too large to preview as text (${formatBytes(file.size)}). Download to view.`,
-      );
-      return;
-    }
+    if (!textKey || !previewUrl) return;
     const ctrl = new AbortController();
-    setTextLoading(true);
-    setTextError(null);
-    setTextContent(null);
     fetch(previewUrl, { credentials: "include", signal: ctrl.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error(`Failed to load (HTTP ${r.status})`);
         return r.text();
       })
-      .then((t) => setTextContent(t))
-      .catch((e: unknown) => {
-        if ((e as { name?: string }).name === "AbortError") return;
-        setTextError(e instanceof Error ? e.message : "Failed to load");
+      .then((t) => {
+        if (ctrl.signal.aborted) return;
+        setTextState({
+          key: textKey,
+          status: "loaded",
+          content: t,
+          error: "",
+        });
       })
-      .finally(() => setTextLoading(false));
+      .catch((e: unknown) => {
+        if (ctrl.signal.aborted) return;
+        setTextState({
+          key: textKey,
+          status: "error",
+          content: "",
+          error: e instanceof Error ? e.message : "Failed to load",
+        });
+      });
     return () => ctrl.abort();
-  }, [open, file, previewUrl, previewType]);
+  }, [textKey, previewUrl]);
 
   if (!file) return null;
+
+  const currentText = textState && textState.key === textKey ? textState : null;
+  const textLoading = !!textKey && !currentText;
+  const textError = currentText?.status === "error" ? currentText.error : null;
+  const textContent =
+    currentText?.status === "loaded" ? currentText.content : null;
+  const tooLargeMsg =
+    tooLarge && file
+      ? `File too large to preview as text (${formatBytes(file.size)}). Download to view.`
+      : null;
 
   const renderBody = () => {
     if (!previewUrl) return null;
@@ -195,6 +218,8 @@ export default function FilePreviewDialog({
       );
     }
     if (previewType === "text") {
+      if (tooLargeMsg)
+        return <Text className={styles.errorText}>{tooLargeMsg}</Text>;
       if (textLoading) return <Spinner label="Loading…" />;
       if (textError)
         return <Text className={styles.errorText}>{textError}</Text>;

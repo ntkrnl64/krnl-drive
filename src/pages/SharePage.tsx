@@ -415,6 +415,7 @@ export default function SharePage() {
   const [loading, setLoading] = useState(true);
   const [siteName, setSiteName] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
 
   useEffect(() => {
     getConfig()
@@ -528,7 +529,7 @@ export default function SharePage() {
         <div className={styles.badgesContainer}>
           {share.expires_at && (
             <Badge
-              color={Date.now() < share.expires_at ? "warning" : "danger"}
+              color={renderedAt < share.expires_at ? "warning" : "danger"}
               size="small"
             >
               Expires {new Date(share.expires_at).toLocaleDateString()}
