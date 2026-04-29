@@ -48,6 +48,8 @@ import {
   LinkRegular,
   ArrowUploadRegular,
   ArrowRightRegular,
+  GlobeRegular,
+  ArrowSwapRegular,
 } from "@fluentui/react-icons";
 import { adminApi, formatBytes } from "../api.ts";
 import type { User } from "../types.ts";
@@ -363,6 +365,12 @@ export default function AdminPage() {
   const [localSettings, setLocalSettings] = useState<Record<string, string>>(
     {},
   );
+  const [prismMigrateOpen, setPrismMigrateOpen] = useState(false);
+  const [prismMigrateOpts, setPrismMigrateOpts] = useState({
+    includeAdmins: false,
+    includeSelf: false,
+  });
+  const [prismMigrating, setPrismMigrating] = useState(false);
 
   const toast = (msg: string, intent: "success" | "error" = "success") =>
     dispatchToast(
@@ -452,6 +460,22 @@ export default function AdminPage() {
   const setSetting = (key: string, value: string) =>
     setLocalSettings((prev) => ({ ...prev, [key]: value }));
 
+  const handlePrismMigrate = async () => {
+    setPrismMigrating(true);
+    try {
+      const res = await adminApi.prismMigrate(prismMigrateOpts);
+      toast(
+        `Migrated ${res.migrated} of ${res.total} users to Prism (${res.skipped} skipped).`,
+      );
+      setPrismMigrateOpen(false);
+      await loadAll();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Migration failed", "error");
+    } finally {
+      setPrismMigrating(false);
+    }
+  };
+
   return (
     <div className={styles.root}>
       <Title2 className={styles.title}>Admin Panel</Title2>
@@ -481,13 +505,23 @@ export default function AdminPage() {
               <div>
                 <div className={styles.usersHeader}>
                   <Text weight="semibold">{users.length} users</Text>
-                  <Button
-                    appearance="primary"
-                    icon={<PersonAddRegular />}
-                    onClick={() => setAddUserOpen(true)}
-                  >
-                    Add User
-                  </Button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <Button
+                      appearance="secondary"
+                      icon={<ArrowSwapRegular />}
+                      onClick={() => setPrismMigrateOpen(true)}
+                      disabled={localSettings.prism_enabled !== "1"}
+                    >
+                      Migrate to Prism
+                    </Button>
+                    <Button
+                      appearance="primary"
+                      icon={<PersonAddRegular />}
+                      onClick={() => setAddUserOpen(true)}
+                    >
+                      Add User
+                    </Button>
+                  </div>
                 </div>
 
                 <Table>
@@ -730,6 +764,73 @@ export default function AdminPage() {
                   </div>
                 </Card>
 
+                <Card>
+                  <div className={styles.cardContent}>
+                    <Title3>
+                      <GlobeRegular
+                        style={{ verticalAlign: "middle", marginRight: 6 }}
+                      />
+                      Prism (OAuth / OpenID Connect)
+                    </Title3>
+                    <Text size={200} className={styles.offText}>
+                      Use a Prism instance as an external identity provider.
+                      Register an OAuth app on Prism with redirect URI{" "}
+                      <code>{`${window.location.origin}/api/auth/prism/callback`}</code>
+                      .
+                    </Text>
+                    <Switch
+                      label="Enable Prism login"
+                      checked={localSettings.prism_enabled === "1"}
+                      onChange={(_, d) =>
+                        setSetting("prism_enabled", d.checked ? "1" : "0")
+                      }
+                    />
+                    <Field
+                      label="Prism base URL"
+                      hint="e.g. https://id.example.com (no trailing slash)"
+                    >
+                      <Input
+                        value={localSettings.prism_base_url ?? ""}
+                        onChange={(_, d) =>
+                          setSetting("prism_base_url", d.value)
+                        }
+                        placeholder="https://id.example.com"
+                      />
+                    </Field>
+                    <Field label="Client ID">
+                      <Input
+                        value={localSettings.prism_client_id ?? ""}
+                        onChange={(_, d) =>
+                          setSetting("prism_client_id", d.value)
+                        }
+                      />
+                    </Field>
+                    <Field
+                      label="Client secret"
+                      hint="Stored server-side. Leave blank to keep current."
+                    >
+                      <Input
+                        type="password"
+                        value={localSettings.prism_client_secret ?? ""}
+                        onChange={(_, d) =>
+                          setSetting("prism_client_secret", d.value)
+                        }
+                        placeholder="••••••••"
+                      />
+                    </Field>
+                    <Switch
+                      label="Auto-provision unknown users on first Prism login"
+                      checked={localSettings.prism_auto_provision === "1"}
+                      onChange={(_, d) =>
+                        setSetting(
+                          "prism_auto_provision",
+                          d.checked ? "1" : "0",
+                        )
+                      }
+                    />
+                  </div>
+                </Card>
+
                 <Button
                   appearance="primary"
                   icon={
@@ -807,6 +908,66 @@ export default function AdminPage() {
         onSave={handleEditUser}
         styles={styles}
       />
+
+      <Dialog
+        open={prismMigrateOpen}
+        onOpenChange={(_, d) => !d.open && setPrismMigrateOpen(false)}
+      >
+        <DialogSurface>
+          <DialogBody>
+            <DialogTitle>Migrate users to Prism</DialogTitle>
+            <DialogContent className={styles.dialogContent}>
+              <Text>
+                This clears each selected user's local password, TOTP secret,
+                recovery codes, and passkeys, and marks them for Prism-only
+                authentication. On their next sign-in via Prism, accounts are
+                linked automatically by username.
+              </Text>
+              <Text className={styles.errorText} weight="semibold">
+                This cannot be undone. Make sure the matching users already
+                exist in Prism before continuing.
+              </Text>
+              <Switch
+                label="Include other admin accounts"
+                checked={prismMigrateOpts.includeAdmins}
+                onChange={(_, d) =>
+                  setPrismMigrateOpts((p) => ({
+                    ...p,
+                    includeAdmins: d.checked,
+                  }))
+                }
+              />
+              <Switch
+                label="Include my own account (you'll be signed out)"
+                checked={prismMigrateOpts.includeSelf}
+                onChange={(_, d) =>
+                  setPrismMigrateOpts((p) => ({
+                    ...p,
+                    includeSelf: d.checked,
+                  }))
+                }
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button
+                appearance="secondary"
+                onClick={() => setPrismMigrateOpen(false)}
+                disabled={prismMigrating}
+              >
+                Cancel
+              </Button>
+              <Button
+                appearance="primary"
+                onClick={() => void handlePrismMigrate()}
+                disabled={prismMigrating}
+                icon={prismMigrating ? <Spinner size="tiny" /> : undefined}
+              >
+                Migrate users
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
+      </Dialog>
     </div>
   );
 }

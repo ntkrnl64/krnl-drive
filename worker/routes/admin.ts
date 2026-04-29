@@ -206,11 +206,18 @@ admin.patch("/settings", requireAdmin, async (c) => {
     "default_share_expiry_hours",
     "default_max_views",
     "default_max_downloads",
+    "default_share_title",
+    "default_share_description",
     "site_name",
     "site_icon_url",
     "allow_registration",
     "guest_can_download",
     "chunk_size",
+    "prism_enabled",
+    "prism_base_url",
+    "prism_client_id",
+    "prism_client_secret",
+    "prism_auto_provision",
   ];
 
   for (const [key, value] of Object.entries(body)) {
@@ -221,6 +228,50 @@ admin.patch("/settings", requireAdmin, async (c) => {
 
   const settings = await getSettings(c.env.DB);
   return c.json({ settings });
+});
+
+// POST /api/admin/prism/migrate — convert existing local users to Prism-only auth.
+//   Strategy: for every non-guest user, clear local credentials (password, TOTP,
+//   recovery codes, passkeys) and mark `auth_source='prism'`. The actual Prism
+//   `sub` is bound when the user first signs in via Prism — username matching
+//   handles the link automatically.
+admin.post("/prism/migrate", requireAdmin, async (c) => {
+  const currentAdmin = c.get("user");
+  const body = await c.req
+    .json<{ includeAdmins?: boolean; includeSelf?: boolean }>()
+    .catch(() => ({}) as { includeAdmins?: boolean; includeSelf?: boolean });
+
+  const { results } = await c.env.DB.prepare(
+    "SELECT id, username, role FROM users WHERE role != 'guest'",
+  ).all<{ id: string; username: string; role: string }>();
+
+  const targets = results.filter((u) => {
+    if (!body.includeSelf && u.id === currentAdmin.id) return false;
+    if (!body.includeAdmins && u.role === "admin") return false;
+    return true;
+  });
+
+  let migrated = 0;
+  for (const u of targets) {
+    await c.env.DB.batch([
+      c.env.DB.prepare(
+        "UPDATE users SET password_hash=NULL, totp_secret=NULL, totp_enabled=0, auth_source='prism', updated_at=? WHERE id=?",
+      ).bind(Date.now(), u.id),
+      c.env.DB.prepare("DELETE FROM recovery_codes WHERE user_id=?").bind(u.id),
+      c.env.DB.prepare("DELETE FROM passkeys WHERE user_id=?").bind(u.id),
+      c.env.DB.prepare("DELETE FROM sessions WHERE user_id=? AND id != ?").bind(
+        u.id,
+        c.get("session").id,
+      ),
+    ]);
+    migrated += 1;
+  }
+
+  return c.json({
+    migrated,
+    skipped: results.length - targets.length,
+    total: results.length,
+  });
 });
 
 // GET /api/admin/stats

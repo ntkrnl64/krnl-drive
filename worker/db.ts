@@ -43,7 +43,7 @@ export async function getUserById(
 ): Promise<User | null> {
   return db
     .prepare(
-      "SELECT id,username,role,disabled,totp_enabled,default_share_title,default_share_description,avatar_url,root_folder_id,created_at,updated_at FROM users WHERE id=?",
+      "SELECT id,username,role,disabled,totp_enabled,default_share_title,default_share_description,avatar_url,root_folder_id,prism_sub,auth_source,created_at,updated_at FROM users WHERE id=?",
     )
     .bind(id)
     .first<User>();
@@ -55,16 +55,39 @@ export async function getUserByUsername(
 ): Promise<UserFull | null> {
   return db
     .prepare(
-      "SELECT id,username,password_hash,role,disabled,totp_enabled,totp_secret,default_share_title,default_share_description,avatar_url,root_folder_id,created_at,updated_at FROM users WHERE username=?",
+      "SELECT id,username,password_hash,role,disabled,totp_enabled,totp_secret,default_share_title,default_share_description,avatar_url,root_folder_id,prism_sub,auth_source,created_at,updated_at FROM users WHERE username=?",
     )
     .bind(username)
     .first<UserFull>();
 }
 
+export async function getUserByPrismSub(
+  db: D1Database,
+  sub: string,
+): Promise<User | null> {
+  return db
+    .prepare(
+      "SELECT id,username,role,disabled,totp_enabled,default_share_title,default_share_description,avatar_url,root_folder_id,prism_sub,auth_source,created_at,updated_at FROM users WHERE prism_sub=?",
+    )
+    .bind(sub)
+    .first<User>();
+}
+
+export async function setUserPrismSub(
+  db: D1Database,
+  userId: string,
+  sub: string | null,
+): Promise<void> {
+  await db
+    .prepare("UPDATE users SET prism_sub=?, updated_at=? WHERE id=?")
+    .bind(sub, Date.now(), userId)
+    .run();
+}
+
 export async function listUsers(db: D1Database): Promise<User[]> {
   const { results } = await db
     .prepare(
-      "SELECT id,username,role,disabled,totp_enabled,default_share_title,default_share_description,avatar_url,root_folder_id,created_at,updated_at FROM users ORDER BY created_at ASC",
+      "SELECT id,username,role,disabled,totp_enabled,default_share_title,default_share_description,avatar_url,root_folder_id,prism_sub,auth_source,created_at,updated_at FROM users ORDER BY created_at ASC",
     )
     .all<User>();
   return results;
@@ -570,6 +593,65 @@ export async function consumeChallenge(
       .bind(id)
       .run();
   return row ?? null;
+}
+
+// ─── Prism OAuth states ──────────────────────────────────────────────────────
+
+const PRISM_STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+export async function savePrismOAuthState(
+  db: D1Database,
+  state: string,
+  codeVerifier: string,
+  redirectTo: string | null,
+  linkUserId: string | null,
+): Promise<void> {
+  const now = Date.now();
+  await db
+    .prepare(
+      "INSERT INTO prism_oauth_states (state,code_verifier,redirect_to,link_user_id,expires_at,created_at) VALUES (?,?,?,?,?,?)",
+    )
+    .bind(
+      state,
+      codeVerifier,
+      redirectTo,
+      linkUserId,
+      now + PRISM_STATE_TTL_MS,
+      now,
+    )
+    .run();
+}
+
+export async function consumePrismOAuthState(
+  db: D1Database,
+  state: string,
+): Promise<{
+  code_verifier: string;
+  redirect_to: string | null;
+  link_user_id: string | null;
+} | null> {
+  const row = await db
+    .prepare(
+      "SELECT code_verifier,redirect_to,link_user_id,expires_at FROM prism_oauth_states WHERE state=?",
+    )
+    .bind(state)
+    .first<{
+      code_verifier: string;
+      redirect_to: string | null;
+      link_user_id: string | null;
+      expires_at: number;
+    }>();
+  if (!row) return null;
+  await db
+    .prepare("DELETE FROM prism_oauth_states WHERE state=?")
+    .bind(state)
+    .run();
+  if (row.expires_at < Date.now()) return null;
+  return {
+    code_verifier: row.code_verifier,
+    redirect_to: row.redirect_to,
+    link_user_id: row.link_user_id,
+  };
 }
 
 // ─── Recovery codes ──────────────────────────────────────────────────────────

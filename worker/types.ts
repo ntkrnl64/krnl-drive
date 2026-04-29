@@ -15,6 +15,8 @@ export interface User {
   default_share_description: string | null;
   avatar_url: string | null;
   root_folder_id: string | null;
+  prism_sub: string | null;
+  auth_source: "local" | "prism";
   created_at: number;
   updated_at: number;
 }

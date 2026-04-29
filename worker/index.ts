@@ -15,6 +15,7 @@ import fileRoutes from "./routes/files.ts";
 import uploadRoutes from "./routes/upload.ts";
 import shareRoutes from "./routes/shares.ts";
 import adminRoutes from "./routes/admin.ts";
+import prismRoutes from "./routes/prism.ts";
 import { streamInline } from "./preview.ts";
 import type { Env, HonoCtxVars } from "./types.ts";
 
@@ -87,6 +88,7 @@ app.post("/api/init/setup", async (c) => {
 
 // ─── Authenticated API routes ─────────────────────────────────────────────────
 app.route("/api/auth", authRoutes);
+app.route("/api/auth/prism", prismRoutes);
 app.route("/api/files", fileRoutes);
 app.route("/api/upload", uploadRoutes);
 app.route("/api/shares", shareRoutes);
@@ -282,15 +284,21 @@ app.get("/api/share/:token/file/:fileId/download", async (c) => {
   return new Response(obj.body, { headers });
 });
 
-// Public config (site name, registration enabled)
+// Public config (site name, registration enabled, prism availability)
 app.get("/api/config", async (c) => {
   const s = await getSettings(c.env.DB).catch(
     () => ({}) as Record<string, string>,
   );
+  const prismReady =
+    s.prism_enabled === "1" &&
+    !!s.prism_base_url &&
+    !!s.prism_client_id &&
+    !!s.prism_client_secret;
   return c.json({
     siteName: s.site_name ?? "KRNL Drive",
     allowRegistration: s.allow_registration === "1",
     siteIconUrl: s.site_icon_url ?? "",
+    prismEnabled: prismReady,
   });
 });
 

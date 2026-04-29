@@ -15,9 +15,14 @@ CREATE TABLE IF NOT EXISTS users (
   default_share_description TEXT,
   avatar_url TEXT,
   root_folder_id TEXT REFERENCES files(id) ON DELETE SET NULL,
+  prism_sub TEXT,
+  auth_source TEXT NOT NULL DEFAULT 'local', -- 'local' | 'prism'
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_prism_sub
+  ON users(prism_sub) WHERE prism_sub IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS recovery_codes (
   id TEXT PRIMARY KEY,
@@ -125,3 +130,18 @@ INSERT OR IGNORE INTO settings VALUES ('site_name', 'KRNL Drive');
 INSERT OR IGNORE INTO settings VALUES ('allow_registration', '0');
 INSERT OR IGNORE INTO settings VALUES ('guest_can_download', '1');
 INSERT OR IGNORE INTO settings VALUES ('chunk_size', '5242880');
+INSERT OR IGNORE INTO settings VALUES ('prism_enabled', '0');
+INSERT OR IGNORE INTO settings VALUES ('prism_base_url', '');
+INSERT OR IGNORE INTO settings VALUES ('prism_client_id', '');
+INSERT OR IGNORE INTO settings VALUES ('prism_client_secret', '');
+INSERT OR IGNORE INTO settings VALUES ('prism_auto_provision', '0');
+
+-- 0007_prism
+CREATE TABLE IF NOT EXISTS prism_oauth_states (
+  state TEXT PRIMARY KEY,
+  code_verifier TEXT NOT NULL,
+  redirect_to TEXT,
+  link_user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+  expires_at INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Button,
@@ -24,9 +24,10 @@ import {
   LockClosedRegular,
   FingerprintRegular,
   ShieldKeyholeRegular,
+  GlobeRegular,
 } from "@fluentui/react-icons";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import { authApi } from "../api.ts";
+import { authApi, prismApi } from "../api.ts";
 import { startAuthentication } from "@simplewebauthn/browser";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/types";
 
@@ -85,6 +86,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [available2fa, setAvailable2fa] = useState<string[]>([]);
+
+  // Surface OAuth callback errors passed via ?error=...
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const err = params.get("error");
+    if (err) {
+      setError(`Login failed: ${err.replace(/_/g, " ")}`);
+      const next = new URL(window.location.href);
+      next.searchParams.delete("error");
+      window.history.replaceState({}, "", next.toString());
+    }
+  }, [location.search]);
 
   const showError = (msg: string) => {
     setError(msg);
@@ -146,6 +159,18 @@ export default function LoginPage() {
     } catch (err) {
       showError(err instanceof Error ? err.message : "Invalid recovery code");
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePrismLogin = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await prismApi.start({ redirectTo: from });
+      window.location.href = res.url;
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Prism login failed");
       setLoading(false);
     }
   };
@@ -235,6 +260,16 @@ export default function LoginPage() {
             >
               Sign in with Passkey
             </Button>
+            {config.prismEnabled && (
+              <Button
+                appearance="secondary"
+                icon={<GlobeRegular />}
+                onClick={handlePrismLogin}
+                disabled={loading}
+              >
+                Sign in with Prism
+              </Button>
+            )}
           </form>
         )}
 

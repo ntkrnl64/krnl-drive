@@ -27,6 +27,7 @@ const DEFAULT_CONFIG: SiteConfig = {
   siteName: "KRNL Drive",
   allowRegistration: false,
   siteIconUrl: "",
+  prismEnabled: false,
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {

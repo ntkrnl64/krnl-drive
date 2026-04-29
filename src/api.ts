@@ -130,6 +130,17 @@ export const authApi = {
     req<{ ok: boolean }>(`/auth/passkeys/${id}`, { method: "DELETE" }),
 };
 
+// ─── Prism (OAuth) ────────────────────────────────────────────────────────────
+export const prismApi = {
+  start: (opts?: { redirectTo?: string; link?: boolean }) =>
+    req<{ url: string }>("/auth/prism/start", {
+      method: "POST",
+      body: JSON.stringify(opts ?? {}),
+    }),
+
+  unlink: () => req<{ ok: boolean }>("/auth/prism/unlink", { method: "POST" }),
+};
+
 // ─── Files ────────────────────────────────────────────────────────────────────
 export const filesApi = {
   list: (parentId: string | null) =>
@@ -407,6 +418,15 @@ export const adminApi = {
       shares: number;
       activeUploads: number;
     }>("/admin/stats"),
+
+  prismMigrate: (opts?: { includeAdmins?: boolean; includeSelf?: boolean }) =>
+    req<{ migrated: number; skipped: number; total: number }>(
+      "/admin/prism/migrate",
+      {
+        method: "POST",
+        body: JSON.stringify(opts ?? {}),
+      },
+    ),
 };
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
