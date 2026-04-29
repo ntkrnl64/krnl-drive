@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { shorthands } from "@fluentui/react-components";
 import {
   DataGrid,
   DataGridBody,
@@ -51,20 +52,35 @@ const useStyles = makeStyles({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    padding: "64px 24px",
+    padding: "72px 24px",
     height: "100%",
+    gap: "8px",
+  },
+  emptyIconContainer: {
+    width: "96px",
+    height: "96px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    ...shorthands.borderRadius("50%"),
+    backgroundColor: "var(--colorNeutralBackground2)",
+    marginBottom: "8px",
   },
   emptyIcon: {
-    fontSize: "48px",
-    color: "var(--colorNeutralForeground4)",
-    marginBottom: "16px",
+    fontSize: "44px",
+    color: "var(--colorNeutralForeground3)",
+  },
+  emptyTitle: {
+    color: "var(--colorNeutralForeground1)",
   },
   emptyText: {
     color: "var(--colorNeutralForeground3)",
+    maxWidth: "320px",
+    textAlign: "center",
   },
   actionsContainer: {
     display: "flex",
-    gap: "4px",
+    gap: "2px",
     justifyContent: "flex-end",
   },
   fileNameCellFolder: {
@@ -77,6 +93,14 @@ const useStyles = makeStyles({
   documentIcon: {
     fontSize: "20px",
     color: "var(--colorNeutralForeground3)",
+  },
+  thumb: {
+    width: "28px",
+    height: "28px",
+    objectFit: "cover",
+    ...shorthands.borderRadius("4px"),
+    backgroundColor: "var(--colorNeutralBackground3)",
+    flexShrink: 0,
   },
   folderText: {
     color: "var(--colorBrandForeground1)",
@@ -110,9 +134,22 @@ function FileIcon({
   item: FileItem;
   styles: ReturnType<typeof useStyles>;
 }) {
+  const [thumbErr, setThumbErr] = useState(false);
   if (item.type === "folder")
     return <FolderRegular className={styles.folderIcon} />;
   const mime = item.mime_type ?? "";
+  if (mime.startsWith("image/") && !thumbErr) {
+    return (
+      <img
+        src={filesApi.previewUrl(item.id)}
+        alt=""
+        className={styles.thumb}
+        loading="lazy"
+        decoding="async"
+        onError={() => setThumbErr(true)}
+      />
+    );
+  }
   if (mime.startsWith("image/"))
     return <ImageRegular className={styles.documentIcon} />;
   if (mime.startsWith("video/"))
@@ -399,10 +436,18 @@ export default function FileList({
   if (items.length === 0) {
     return (
       <div className={styles.emptyState}>
-        <FolderOpenRegular className={styles.emptyIcon} />
-        <Text block className={styles.emptyText}>
+        <div className={styles.emptyIconContainer}>
+          <FolderOpenRegular className={styles.emptyIcon} />
+        </div>
+        <Text size={400} weight="semibold" className={styles.emptyTitle}>
           This folder is empty
         </Text>
+        {!isGuest && (
+          <Text className={styles.emptyText}>
+            Drag files here or use the Upload button above to add your first
+            file.
+          </Text>
+        )}
       </div>
     );
   }

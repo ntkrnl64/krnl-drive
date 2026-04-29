@@ -45,11 +45,34 @@ const useStyles = makeStyles({
     height: "200px",
   },
   emptyContainer: {
-    textAlign: "center",
-    ...shorthands.padding("64px", "24px"),
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    ...shorthands.padding("72px", "24px"),
+  },
+  emptyIconWrap: {
+    width: "96px",
+    height: "96px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    ...shorthands.borderRadius("50%"),
+    backgroundColor: "var(--colorNeutralBackground2)",
+    marginBottom: "8px",
+  },
+  emptyIcon: {
+    fontSize: "44px",
+    color: "var(--colorNeutralForeground3)",
+  },
+  emptyTitle: {
+    color: "var(--colorNeutralForeground1)",
   },
   emptyText: {
     color: "var(--colorNeutralForeground3)",
+    maxWidth: "320px",
+    textAlign: "center",
   },
   linksContainer: {
     display: "flex",
@@ -304,15 +327,15 @@ export default function SharesPage() {
         </div>
       ) : shares.length === 0 ? (
         <div className={styles.emptyContainer}>
-          <LinkRegular
-            style={{
-              fontSize: 48,
-              color: "var(--colorNeutralForeground4)",
-              marginBottom: 16,
-            }}
-          />
-          <Text block className={styles.emptyText}>
-            You haven't created any share links yet.
+          <div className={styles.emptyIconWrap}>
+            <LinkRegular className={styles.emptyIcon} />
+          </div>
+          <Text size={400} weight="semibold" className={styles.emptyTitle}>
+            No share links yet
+          </Text>
+          <Text className={styles.emptyText}>
+            Click "Share" on any file to create a share link. Links you create
+            will appear here.
           </Text>
         </div>
       ) : (

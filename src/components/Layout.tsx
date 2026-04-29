@@ -39,7 +39,7 @@ const useStyles = makeStyles({
     position: "relative",
   },
   sidebar: {
-    width: "250px",
+    width: "260px",
     ...shorthands.borderRight("1px", "solid", "var(--colorNeutralStroke2)"),
     display: "flex",
     flexDirection: "column",
@@ -57,12 +57,11 @@ const useStyles = makeStyles({
   sidebarOpen: {
     "@media (max-width: 768px)": {
       transform: "translateX(0)",
-      boxShadow: "0 0 10px rgba(0,0,0,0.2)",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.24)",
     },
   },
   logoContainer: {
-    padding: "16px 20px",
-    ...shorthands.borderBottom("1px", "solid", "var(--colorNeutralStroke2)"),
+    padding: "20px 20px 16px",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -71,7 +70,28 @@ const useStyles = makeStyles({
   logoText: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
+    gap: "10px",
+    minWidth: 0,
+  },
+  logoIcon: {
+    width: "32px",
+    height: "32px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    ...shorthands.borderRadius("8px"),
+    background:
+      "linear-gradient(135deg, var(--colorBrandBackground) 0%, var(--colorBrandBackgroundHover) 100%)",
+    color: "var(--colorNeutralForegroundOnBrand)",
+    flexShrink: 0,
+    boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+  },
+  logoIconImg: {
+    width: "32px",
+    height: "32px",
+    objectFit: "cover",
+    ...shorthands.borderRadius("8px"),
+    flexShrink: 0,
   },
   closeSidebarBtn: {
     display: "none",
@@ -81,42 +101,67 @@ const useStyles = makeStyles({
   },
   navContainer: {
     flexGrow: 1,
-    padding: "16px 8px",
+    padding: "8px 10px",
     display: "flex",
     flexDirection: "column",
-    gap: "4px",
+    gap: "2px",
     overflowY: "auto",
   },
+  navSectionLabel: {
+    padding: "8px 12px 4px",
+    color: "var(--colorNeutralForeground4)",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    fontSize: "11px",
+    fontWeight: 600,
+  },
   navItem: {
+    position: "relative",
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    padding: "12px 16px",
+    padding: "9px 12px 9px 14px",
     border: "none",
     backgroundColor: "transparent",
-    color: "var(--colorNeutralForeground1)",
+    color: "var(--colorNeutralForeground2)",
     cursor: "pointer",
     fontSize: "14px",
-    ...shorthands.borderRadius("6px"),
+    ...shorthands.borderRadius("8px"),
     width: "100%",
     textAlign: "left",
     transitionProperty: "background-color, color",
-    transitionDuration: "0.2s",
+    transitionDuration: "0.15s",
     "&:hover": {
       backgroundColor: "var(--colorNeutralBackground1Hover)",
+      color: "var(--colorNeutralForeground1)",
+    },
+    "&:focus-visible": {
+      outline: "2px solid var(--colorStrokeFocus2)",
+      outlineOffset: "1px",
     },
   },
   navItemSelected: {
     backgroundColor: "var(--colorBrandBackground2)",
-    color: "var(--colorBrandForeground2)",
+    color: "var(--colorBrandForeground1)",
     fontWeight: 600,
     "&:hover": {
       backgroundColor: "var(--colorBrandBackground2Hover)",
+      color: "var(--colorBrandForeground1)",
+    },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      left: "-10px",
+      top: "8px",
+      bottom: "8px",
+      width: "3px",
+      ...shorthands.borderRadius("0", "2px", "2px", "0"),
+      backgroundColor: "var(--colorBrandForeground1)",
     },
   },
   userSection: {
     ...shorthands.borderTop("1px", "solid", "var(--colorNeutralStroke2)"),
-    padding: "12px 16px",
+    padding: "10px",
   },
   userButton: {
     width: "100%",
@@ -126,16 +171,25 @@ const useStyles = makeStyles({
     backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
-    padding: "8px",
-    ...shorthands.borderRadius("6px"),
+    padding: "8px 10px",
+    ...shorthands.borderRadius("8px"),
+    transitionProperty: "background-color",
+    transitionDuration: "0.15s",
     "&:hover": {
       backgroundColor: "var(--colorNeutralBackground1Hover)",
+    },
+    "&:focus-visible": {
+      outline: "2px solid var(--colorStrokeFocus2)",
+      outlineOffset: "1px",
     },
   },
   userInfo: {
     flexGrow: 1,
     textAlign: "left",
     overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
   },
   mainContent: {
     flexGrow: 1,
@@ -171,6 +225,7 @@ const useStyles = makeStyles({
       bottom: 0,
       backgroundColor: "rgba(0, 0, 0, 0.4)",
       zIndex: 999,
+      backdropFilter: "blur(2px)",
     },
   },
 });
@@ -250,14 +305,14 @@ export default function Layout({ children }: LayoutProps) {
               <img
                 src={config.siteIconUrl}
                 alt=""
-                style={{ width: 24, height: 24, objectFit: "contain" }}
+                className={styles.logoIconImg}
               />
             ) : (
-              <FolderRegular
-                style={{ fontSize: 24, color: "var(--colorBrandForeground1)" }}
-              />
+              <span className={styles.logoIcon}>
+                <FolderRegular fontSize={18} />
+              </span>
             )}
-            <Text weight="semibold" size={400}>
+            <Text weight="semibold" size={400} truncate block>
               {config.siteName}
             </Text>
           </div>
@@ -271,6 +326,7 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Nav links */}
         <div className={styles.navContainer}>
+          <div className={styles.navSectionLabel}>Workspace</div>
           {navItems.map((item) => {
             const isSelected =
               location.pathname === item.path ||
@@ -315,11 +371,12 @@ export default function Layout({ children }: LayoutProps) {
                   </Text>
                   <Badge
                     size="small"
+                    appearance={user?.role === "guest" ? "outline" : "tint"}
                     color={
                       user?.role === "admin"
                         ? "danger"
                         : user?.role === "guest"
-                          ? "subtle"
+                          ? "informative"
                           : "brand"
                     }
                   >

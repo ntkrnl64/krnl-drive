@@ -42,7 +42,10 @@ const useStyles = makeStyles({
   },
   pageContainer: {
     minHeight: "100vh",
-    backgroundColor: "var(--colorNeutralBackground2)",
+    background:
+      "radial-gradient(circle at 20% 0%, var(--colorBrandBackground2) 0%, transparent 45%)," +
+      "radial-gradient(circle at 80% 100%, var(--colorBrandBackground2) 0%, transparent 45%)," +
+      "var(--colorNeutralBackground2)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -51,7 +54,8 @@ const useStyles = makeStyles({
   errorCard: {
     ...shorthands.padding("40px"),
     textAlign: "center",
-    maxWidth: "400px",
+    maxWidth: "420px",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05)",
   },
   errorIcon: {
     fontSize: "64px",
@@ -67,15 +71,49 @@ const useStyles = makeStyles({
     maxWidth: "480px",
     width: "100%",
     ...shorthands.padding("32px"),
+    boxShadow: "0 12px 40px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.05)",
+    ...shorthands.borderRadius("12px"),
   },
   mainCardFolder: {
-    maxWidth: "700px",
+    maxWidth: "720px",
     width: "100%",
     ...shorthands.padding("32px"),
+    boxShadow: "0 12px 40px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.05)",
+    ...shorthands.borderRadius("12px"),
   },
   fileIconContainer: {
     textAlign: "center",
     marginBottom: "24px",
+  },
+  imageThumbWrap: {
+    width: "100%",
+    maxHeight: "260px",
+    overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "var(--colorNeutralBackground3)",
+    ...shorthands.borderRadius("8px"),
+    marginBottom: "20px",
+  },
+  imageThumb: {
+    maxWidth: "100%",
+    maxHeight: "260px",
+    objectFit: "contain",
+    display: "block",
+    cursor: "zoom-in",
+  },
+  iconBadge: {
+    width: "84px",
+    height: "84px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto",
+    ...shorthands.borderRadius("18px"),
+    backgroundColor: "var(--colorNeutralBackground3)",
+    color: "var(--colorNeutralForeground2)",
+    marginBottom: "12px",
   },
   fileTitle: {
     marginTop: "12px",
@@ -121,8 +159,8 @@ const useStyles = makeStyles({
     borderTop: "1px solid var(--colorNeutralStroke2)",
   },
   documentIconLarge: {
-    fontSize: "64px",
-    color: "var(--colorNeutralForeground3)",
+    fontSize: "44px",
+    color: "var(--colorNeutralForeground2)",
   },
   folderHeader: {
     display: "flex",
@@ -463,17 +501,38 @@ export default function SharePage() {
       ? share.max_downloads - share.download_count
       : null;
 
+  const isImage = !isFolder && (file.mime_type ?? "").startsWith("image/");
+
   return (
     <div className={styles.pageContainer}>
       <Card className={isFolder ? styles.mainCardFolder : styles.mainCard}>
+        {/* Inline image preview, otherwise badge icon */}
+        {isImage && token && (
+          <div
+            className={styles.imageThumbWrap}
+            onClick={() => setPreviewOpen(true)}
+            role="button"
+            tabIndex={0}
+          >
+            <img
+              src={sharesApi.previewUrl(token)}
+              alt={file.name}
+              className={styles.imageThumb}
+            />
+          </div>
+        )}
+
         {/* Icon + title */}
         <div className={styles.fileIconContainer}>
-          {isFolder ? (
-            <FolderOpenRegular className={styles.documentIconLarge} />
-          ) : (
-            <FileTypeIcon mimeType={file.mime_type} styles={styles} />
+          {!isImage && (
+            <div className={styles.iconBadge}>
+              {isFolder ? (
+                <FolderOpenRegular className={styles.documentIconLarge} />
+              ) : (
+                <FileTypeIcon mimeType={file.mime_type} styles={styles} />
+              )}
+            </div>
           )}
-          <br />
           <Title2 className={styles.fileTitle}>
             {display?.title || file.name}
           </Title2>

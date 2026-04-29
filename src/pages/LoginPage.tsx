@@ -4,7 +4,7 @@ import {
   Button,
   Input,
   Field,
-  Title1,
+  Title2,
   Text,
   Spinner,
   Card,
@@ -17,6 +17,7 @@ import {
   MessageBar,
   MessageBarBody,
   makeStyles,
+  shorthands,
 } from "@fluentui/react-components";
 import {
   KeyRegular,
@@ -25,6 +26,7 @@ import {
   FingerprintRegular,
   ShieldKeyholeRegular,
   GlobeRegular,
+  CloudRegular,
 } from "@fluentui/react-icons";
 import { useAuth } from "../contexts/AuthContext.tsx";
 import { authApi, prismApi } from "../api.ts";
@@ -37,20 +39,53 @@ const useStyles = makeStyles({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "var(--colorNeutralBackground2)",
+    padding: "24px",
+    background:
+      "radial-gradient(circle at 20% 0%, var(--colorBrandBackground2) 0%, transparent 45%)," +
+      "radial-gradient(circle at 80% 100%, var(--colorPaletteBerryBackground2, var(--colorBrandBackground2)) 0%, transparent 45%)," +
+      "var(--colorNeutralBackground2)",
   },
   card: {
-    width: "400px",
+    width: "100%",
+    maxWidth: "420px",
     paddingTop: "32px",
-    paddingBottom: "32px",
+    paddingBottom: "28px",
     paddingLeft: "32px",
     paddingRight: "32px",
     display: "flex",
     flexDirection: "column",
-    gap: "24px",
+    gap: "20px",
+    backgroundColor: "var(--colorNeutralBackground1)",
+    boxShadow:
+      "0 8px 32px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05), 0 0 0 1px var(--colorNeutralStroke2)",
+    ...shorthands.borderRadius("12px"),
   },
   header: {
     textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "8px",
+  },
+  brandMark: {
+    width: "56px",
+    height: "56px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    ...shorthands.borderRadius("14px"),
+    background:
+      "linear-gradient(135deg, var(--colorBrandBackground) 0%, var(--colorBrandBackgroundHover) 100%)",
+    color: "var(--colorNeutralForegroundOnBrand)",
+    fontSize: "28px",
+    boxShadow:
+      "0 6px 16px rgba(0, 90, 200, 0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+  },
+  brandImg: {
+    width: "56px",
+    height: "56px",
+    objectFit: "cover",
+    ...shorthands.borderRadius("14px"),
   },
   icon: {
     fontSize: "40px",
@@ -58,14 +93,28 @@ const useStyles = makeStyles({
   },
   subText: {
     color: "var(--colorNeutralForeground3)",
+    textAlign: "center",
   },
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
+    gap: "14px",
+  },
+  primarySubmit: {
+    height: "40px",
+  },
+  altButton: {
+    height: "40px",
+    justifyContent: "center",
   },
   errorText: {
     color: "var(--colorPaletteRedForeground1)",
+    fontSize: "13px",
+  },
+  footerHint: {
+    textAlign: "center",
+    color: "var(--colorNeutralForeground4)",
+    fontSize: "12px",
   },
 });
 
@@ -205,19 +254,22 @@ export default function LoginPage() {
       <Card className={styles.card}>
         {/* Row 1: Branding */}
         <div className={styles.header}>
-          <Title1>{config.siteName}</Title1>
+          {config.siteIconUrl ? (
+            <img src={config.siteIconUrl} alt="" className={styles.brandImg} />
+          ) : (
+            <span className={styles.brandMark}>
+              <CloudRegular />
+            </span>
+          )}
+          <Title2 style={{ marginTop: 4 }}>{config.siteName}</Title2>
+          <Text className={styles.subText}>
+            {step === "credentials"
+              ? "Sign in to your account"
+              : step === "totp"
+                ? "Two-factor authentication"
+                : "Enter recovery code"}
+          </Text>
         </div>
-
-        <Divider />
-
-        {/* Row 2: Step label + form */}
-        <Text className={styles.subText}>
-          {step === "credentials"
-            ? "Sign in to your account"
-            : step === "totp"
-              ? "Two-factor authentication"
-              : "Enter recovery code"}
-        </Text>
 
         {/* Credentials step */}
         {step === "credentials" && (
@@ -248,28 +300,33 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               icon={loading ? <Spinner size="tiny" /> : undefined}
+              className={styles.primarySubmit}
             >
               {loading ? "Signing in..." : "Sign in"}
             </Button>
-            <Divider>or</Divider>
-            <Button
-              appearance="secondary"
-              icon={<FingerprintRegular />}
-              onClick={handlePasskeyLogin}
-              disabled={loading}
-            >
-              Sign in with Passkey
-            </Button>
-            {config.prismEnabled && (
+            <Divider>or continue with</Divider>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <Button
                 appearance="secondary"
-                icon={<GlobeRegular />}
-                onClick={handlePrismLogin}
+                icon={<FingerprintRegular />}
+                onClick={handlePasskeyLogin}
                 disabled={loading}
+                className={styles.altButton}
               >
-                Sign in with Prism
+                Passkey
               </Button>
-            )}
+              {config.prismEnabled && (
+                <Button
+                  appearance="secondary"
+                  icon={<GlobeRegular />}
+                  onClick={handlePrismLogin}
+                  disabled={loading}
+                  className={styles.altButton}
+                >
+                  Sign in with Prism
+                </Button>
+              )}
+            </div>
           </form>
         )}
 

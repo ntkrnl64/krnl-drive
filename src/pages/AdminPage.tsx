@@ -99,15 +99,56 @@ const useStyles = makeStyles({
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
     gap: "16px",
-    maxWidth: "800px",
+    maxWidth: "880px",
   },
   statCard: {
     ...shorthands.padding("20px"),
-    textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "6px",
+    transitionProperty: "transform, box-shadow",
+    transitionDuration: "0.18s",
+    "&:hover": {
+      transform: "translateY(-1px)",
+      boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+    },
   },
-  statIcon: {
-    fontSize: "32px",
-    marginBottom: "8px",
+  statIconWrap: {
+    width: "40px",
+    height: "40px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    ...shorthands.borderRadius("10px"),
+    fontSize: "20px",
+    marginBottom: "4px",
+  },
+  statIconUsers: {
+    backgroundColor: "var(--colorPaletteBlueBackground2)",
+    color: "var(--colorPaletteBlueForeground2)",
+  },
+  statIconFiles: {
+    backgroundColor: "var(--colorPaletteGreenBackground2)",
+    color: "var(--colorPaletteGreenForeground2)",
+  },
+  statIconStorage: {
+    backgroundColor: "var(--colorPaletteBerryBackground2)",
+    color: "var(--colorPaletteBerryForeground2)",
+  },
+  statIconShares: {
+    backgroundColor: "var(--colorPaletteMarigoldBackground2)",
+    color: "var(--colorPaletteMarigoldForeground2)",
+  },
+  statIconUploads: {
+    backgroundColor: "var(--colorPaletteLilacBackground2)",
+    color: "var(--colorPaletteLilacForeground2)",
+  },
+  statValue: {
+    fontSize: "28px",
+    fontWeight: 700,
+    lineHeight: 1.1,
+    color: "var(--colorNeutralForeground1)",
   },
   statLabel: {
     color: "var(--colorNeutralForeground3)",
@@ -857,33 +898,38 @@ export default function AdminPage() {
                     label: "Total Users",
                     value: stats.users,
                     icon: <PeopleRegular />,
+                    iconClass: styles.statIconUsers,
                   },
                   {
                     label: "Total Files",
                     value: stats.files,
                     icon: <DocumentRegular />,
+                    iconClass: styles.statIconFiles,
                   },
                   {
                     label: "Storage Used",
                     value: formatBytes(stats.totalSize),
                     icon: <DatabaseRegular />,
+                    iconClass: styles.statIconStorage,
                   },
                   {
                     label: "Share Links",
                     value: stats.shares,
                     icon: <LinkRegular />,
+                    iconClass: styles.statIconShares,
                   },
                   {
                     label: "Active Uploads",
                     value: stats.activeUploads,
                     icon: <ArrowUploadRegular />,
+                    iconClass: styles.statIconUploads,
                   },
                 ].map((stat) => (
                   <Card key={stat.label} className={styles.statCard}>
-                    <div className={styles.statIcon}>{stat.icon}</div>
-                    <Text size={600} weight="bold" block>
-                      {String(stat.value)}
-                    </Text>
+                    <div className={`${styles.statIconWrap} ${stat.iconClass}`}>
+                      {stat.icon}
+                    </div>
+                    <div className={styles.statValue}>{String(stat.value)}</div>
                     <Text size={200} className={styles.statLabel}>
                       {stat.label}
                     </Text>
