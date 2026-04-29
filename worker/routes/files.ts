@@ -8,6 +8,7 @@ import {
   deleteFileRecord,
   createFile,
 } from "../db.ts";
+import { streamInline } from "../preview.ts";
 import type { Env, HonoCtxVars } from "../types.ts";
 
 const files = new Hono<{ Bindings: Env; Variables: HonoCtxVars }>();
@@ -131,6 +132,13 @@ files.patch("/:id", requireAuth, async (c) => {
   await updateFile(c.env.DB, file.id, updateObj);
   const updated = await getFile(c.env.DB, file.id);
   return c.json({ item: updated });
+});
+
+// GET /api/files/:id/preview — inline stream with Range support
+files.get("/:id/preview", requireAuth, async (c) => {
+  const file = await getFile(c.env.DB, c.req.param("id")!);
+  if (!file) return c.json({ error: "Not found" }, 404);
+  return streamInline(c, file);
 });
 
 // GET /api/files/:id/download

@@ -38,8 +38,10 @@ import {
   DocumentPdfRegular,
   FolderZipRegular,
   CodeRegular,
+  EyeRegular,
 } from "@fluentui/react-icons";
 import { formatBytes, formatDate, filesApi } from "../api.ts";
+import { isPreviewable } from "../preview.ts";
 import type { FileItem } from "../types.ts";
 import type { User } from "../types.ts";
 
@@ -91,6 +93,7 @@ interface FileListProps {
   items: FileItem[];
   currentUser: User;
   onNavigate: (folder: FileItem) => void;
+  onPreview: (item: FileItem) => void;
   onDelete: (item: FileItem) => void;
   onRename: (item: FileItem) => void;
   onShare: (item: FileItem) => void;
@@ -127,6 +130,7 @@ export default function FileList({
   items,
   currentUser,
   onNavigate,
+  onPreview,
   onDelete,
   onRename,
   onShare,
@@ -173,22 +177,29 @@ export default function FileList({
         return a.name.localeCompare(b.name);
       },
       renderHeaderCell: () => "Name",
-      renderCell: (item) => (
-        <TableCellLayout
-          media={<FileIcon item={item} styles={styles} />}
-          className={
-            item.type === "folder" ? styles.fileNameCellFolder : undefined
-          }
-          onClick={() => item.type === "folder" && onNavigate(item)}
-        >
-          <Text
-            weight={item.type === "folder" ? "semibold" : "regular"}
-            className={item.type === "folder" ? styles.folderText : undefined}
+      renderCell: (item) => {
+        const clickable =
+          item.type === "folder" ||
+          (item.type === "file" && isPreviewable(item.mime_type, item.name));
+        return (
+          <TableCellLayout
+            media={<FileIcon item={item} styles={styles} />}
+            className={clickable ? styles.fileNameCellFolder : undefined}
+            onClick={() => {
+              if (item.type === "folder") onNavigate(item);
+              else if (isPreviewable(item.mime_type, item.name))
+                onPreview(item);
+            }}
           >
-            {item.name}
-          </Text>
-        </TableCellLayout>
-      ),
+            <Text
+              weight={item.type === "folder" ? "semibold" : "regular"}
+              className={item.type === "folder" ? styles.folderText : undefined}
+            >
+              {item.name}
+            </Text>
+          </TableCellLayout>
+        );
+      },
     }),
     createTableColumn<FileItem>({
       columnId: "size",
@@ -220,6 +231,17 @@ export default function FileList({
       renderCell: (item) => (
         <TableCellLayout>
           <div className={styles.actionsContainer}>
+            {item.type === "file" &&
+              isPreviewable(item.mime_type, item.name) && (
+                <Tooltip content="Preview" relationship="label">
+                  <Button
+                    appearance="subtle"
+                    size="small"
+                    icon={<EyeRegular />}
+                    onClick={() => onPreview(item)}
+                  />
+                </Tooltip>
+              )}
             {item.type === "file" && (
               <Tooltip content="Download" relationship="label">
                 <a
@@ -308,6 +330,15 @@ export default function FileList({
                       Copy Folder ID
                     </MenuItem>
                   )}
+                  {item.type === "file" &&
+                    isPreviewable(item.mime_type, item.name) && (
+                      <MenuItem
+                        icon={<EyeRegular />}
+                        onClick={() => onPreview(item)}
+                      >
+                        Preview
+                      </MenuItem>
+                    )}
                   {item.type === "file" && (
                     <MenuItem
                       icon={<ArrowDownloadRegular />}
@@ -421,6 +452,15 @@ export default function FileList({
                 >
                   {item.type === "folder" ? "Copy Folder ID" : "Copy File ID"}
                 </MenuItem>
+                {item.type === "file" &&
+                  isPreviewable(item.mime_type, item.name) && (
+                    <MenuItem
+                      icon={<EyeRegular />}
+                      onClick={() => onPreview(item)}
+                    >
+                      Preview
+                    </MenuItem>
+                  )}
                 {item.type === "file" && (
                   <MenuItem
                     icon={<ArrowDownloadRegular />}

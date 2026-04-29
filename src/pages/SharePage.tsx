@@ -26,8 +26,11 @@ import {
   FolderOpenRegular,
   ArrowUpRegular,
   HomeRegular,
+  EyeRegular,
 } from "@fluentui/react-icons";
 import { sharesApi, getConfig, formatBytes, formatDate } from "../api.ts";
+import { isPreviewable } from "../preview.ts";
+import FilePreviewDialog from "../components/FilePreviewDialog.tsx";
 import type { Share, FileItem } from "../types.ts";
 
 const useStyles = makeStyles({
@@ -243,6 +246,7 @@ function FolderBrowser({
   ]);
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewItem, setPreviewItem] = useState<FileItem | null>(null);
 
   const currentId = breadcrumb[breadcrumb.length - 1].id;
 
@@ -319,49 +323,81 @@ function FolderBrowser({
             <Text size={200}>Empty folder</Text>
           </div>
         ) : (
-          items.map((item) => (
-            <div
-              key={item.id}
-              className={`${styles.fileRow}${item.type === "folder" ? ` ${styles.fileRowFolder}` : ""}`}
-              onClick={
-                item.type === "folder"
-                  ? () => navigateTo({ id: item.id, name: item.name })
-                  : undefined
-              }
-            >
-              <FileRowIcon item={item} />
-              <Text className={styles.fileName}>{item.name}</Text>
-              {item.type === "file" && (
-                <Text size={100} className={styles.fileMeta}>
-                  {formatBytes(item.size)}
-                </Text>
-              )}
-              {item.type === "file" && (
-                <Button
-                  appearance="subtle"
-                  size="small"
-                  icon={<ArrowDownloadRegular />}
-                  as="a"
-                  href={sharesApi.fileDownloadUrl(token, item.id)}
-                  download={item.name}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Download
-                </Button>
-              )}
-              {item.type === "folder" && (
-                <ArrowUpRegular
-                  style={{
-                    transform: "rotate(90deg)",
-                    color: "var(--colorNeutralForeground3)",
-                    fontSize: 14,
-                  }}
-                />
-              )}
-            </div>
-          ))
+          items.map((item) => {
+            const previewable =
+              item.type === "file" && isPreviewable(item.mime_type, item.name);
+            const clickable = item.type === "folder" || previewable;
+            return (
+              <div
+                key={item.id}
+                className={`${styles.fileRow}${clickable ? ` ${styles.fileRowFolder}` : ""}`}
+                onClick={
+                  item.type === "folder"
+                    ? () => navigateTo({ id: item.id, name: item.name })
+                    : previewable
+                      ? () => setPreviewItem(item)
+                      : undefined
+                }
+              >
+                <FileRowIcon item={item} />
+                <Text className={styles.fileName}>{item.name}</Text>
+                {item.type === "file" && (
+                  <Text size={100} className={styles.fileMeta}>
+                    {formatBytes(item.size)}
+                  </Text>
+                )}
+                {previewable && (
+                  <Button
+                    appearance="subtle"
+                    size="small"
+                    icon={<EyeRegular />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewItem(item);
+                    }}
+                  >
+                    Preview
+                  </Button>
+                )}
+                {item.type === "file" && (
+                  <Button
+                    appearance="subtle"
+                    size="small"
+                    icon={<ArrowDownloadRegular />}
+                    as="a"
+                    href={sharesApi.fileDownloadUrl(token, item.id)}
+                    download={item.name}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Download
+                  </Button>
+                )}
+                {item.type === "folder" && (
+                  <ArrowUpRegular
+                    style={{
+                      transform: "rotate(90deg)",
+                      color: "var(--colorNeutralForeground3)",
+                      fontSize: 14,
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })
         )}
       </div>
+
+      <FilePreviewDialog
+        file={previewItem}
+        open={!!previewItem}
+        onClose={() => setPreviewItem(null)}
+        previewUrl={
+          previewItem ? sharesApi.filePreviewUrl(token, previewItem.id) : null
+        }
+        downloadUrl={
+          previewItem ? sharesApi.fileDownloadUrl(token, previewItem.id) : null
+        }
+      />
     </>
   );
 }
@@ -378,6 +414,7 @@ export default function SharePage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [siteName, setSiteName] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     getConfig()
@@ -516,19 +553,42 @@ export default function SharePage() {
             )}
         </div>
 
-        {/* Download button (files only) */}
+        {/* Action buttons (files only) */}
         {!isFolder && (
-          <Button
-            appearance="primary"
-            size="large"
-            icon={<ArrowDownloadRegular />}
-            as="a"
-            href={sharesApi.downloadUrl(share.token)}
-            download={file.name}
-            className={styles.downloadButton}
-          >
-            Download {file.name}
-          </Button>
+          <div style={{ display: "flex", gap: 8, flexDirection: "column" }}>
+            {isPreviewable(file.mime_type, file.name) && (
+              <Button
+                appearance="secondary"
+                size="large"
+                icon={<EyeRegular />}
+                onClick={() => setPreviewOpen(true)}
+                className={styles.downloadButton}
+              >
+                Preview
+              </Button>
+            )}
+            <Button
+              appearance="primary"
+              size="large"
+              icon={<ArrowDownloadRegular />}
+              as="a"
+              href={sharesApi.downloadUrl(share.token)}
+              download={file.name}
+              className={styles.downloadButton}
+            >
+              Download {file.name}
+            </Button>
+          </div>
+        )}
+
+        {!isFolder && (
+          <FilePreviewDialog
+            file={file}
+            open={previewOpen}
+            onClose={() => setPreviewOpen(false)}
+            previewUrl={sharesApi.previewUrl(share.token)}
+            downloadUrl={sharesApi.downloadUrl(share.token)}
+          />
         )}
 
         {creator?.username && (

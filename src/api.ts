@@ -172,6 +172,8 @@ export const filesApi = {
     req<{ ok: boolean }>(`/files/${id}`, { method: "DELETE" }),
 
   downloadUrl: (id: string) => `${BASE}/files/${id}/download`,
+
+  previewUrl: (id: string) => `${BASE}/files/${id}/preview`,
 };
 
 // ─── Chunked Upload ───────────────────────────────────────────────────────────
@@ -342,6 +344,8 @@ export const sharesApi = {
 
   downloadUrl: (token: string) => `${BASE}/share/${token}/download`,
 
+  previewUrl: (token: string) => `${BASE}/share/${token}/preview`,
+
   browse: (token: string, folderId?: string) =>
     req<{ items: FileItem[] }>(
       `/share/${token}/browse${folderId ? `?folderId=${encodeURIComponent(folderId)}` : ""}`,
@@ -349,6 +353,9 @@ export const sharesApi = {
 
   fileDownloadUrl: (token: string, fileId: string) =>
     `${BASE}/share/${token}/file/${encodeURIComponent(fileId)}/download`,
+
+  filePreviewUrl: (token: string, fileId: string) =>
+    `${BASE}/share/${token}/file/${encodeURIComponent(fileId)}/preview`,
 };
 
 // ─── Admin ────────────────────────────────────────────────────────────────────

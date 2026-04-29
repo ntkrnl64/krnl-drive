@@ -42,6 +42,7 @@ import { UploadProvider } from "../contexts/UploadContext.tsx";
 import FileList from "../components/FileList.tsx";
 import UploadZone from "../components/UploadZone.tsx";
 import ShareDialog from "../components/ShareDialog.tsx";
+import FilePreviewDialog from "../components/FilePreviewDialog.tsx";
 import {
   CreateFolderDialog,
   RenameDialog,
@@ -116,6 +117,7 @@ export default function DrivePage() {
   const [shareItem, setShareItem] = useState<FileItem | null>(null);
   const [moveItem, setMoveItem] = useState<FileItem | null>(null);
   const [copyItem, setCopyItem] = useState<FileItem | null>(null);
+  const [previewItem, setPreviewItem] = useState<FileItem | null>(null);
   const [deleteBatchOpen, setDeleteBatchOpen] = useState(false);
 
   const toast = (msg: string, intent: "success" | "error" = "success") =>
@@ -296,6 +298,7 @@ export default function DrivePage() {
                   items={items}
                   currentUser={user!}
                   onNavigate={navigate}
+                  onPreview={(item) => setPreviewItem(item)}
                   onDelete={(item) => setDeleteItem(item)}
                   onRename={(item) => setRenameItem(item)}
                   onShare={(item) => setShareItem(item)}
@@ -364,6 +367,15 @@ export default function DrivePage() {
           file={shareItem}
           open={!!shareItem}
           onClose={() => setShareItem(null)}
+        />
+        <FilePreviewDialog
+          file={previewItem}
+          open={!!previewItem}
+          onClose={() => setPreviewItem(null)}
+          previewUrl={previewItem ? filesApi.previewUrl(previewItem.id) : null}
+          downloadUrl={
+            previewItem ? filesApi.downloadUrl(previewItem.id) : null
+          }
         />
         <MoveDialog
           item={moveItem}

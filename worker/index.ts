@@ -15,6 +15,7 @@ import fileRoutes from "./routes/files.ts";
 import uploadRoutes from "./routes/upload.ts";
 import shareRoutes from "./routes/shares.ts";
 import adminRoutes from "./routes/admin.ts";
+import { streamInline } from "./preview.ts";
 import type { Env, HonoCtxVars } from "./types.ts";
 
 const app = new Hono<{ Bindings: Env; Variables: HonoCtxVars }>();
@@ -178,6 +179,42 @@ app.get("/api/share/:token/download", async (c) => {
   headers.set("Content-Type", file.mime_type ?? "application/octet-stream");
   headers.set("Content-Length", file.size.toString());
   return new Response(obj.body, { headers });
+});
+
+// GET /api/share/:token/preview — inline stream a single-file share (no download-count bump)
+app.get("/api/share/:token/preview", async (c) => {
+  const share = await getShareByToken(c.env.DB, c.req.param("token"));
+  if (!share) return c.json({ error: "Share not found" }, 404);
+  if (share.expires_at && Date.now() > share.expires_at)
+    return c.json({ error: "Expired" }, 410);
+
+  const file = await getFile(c.env.DB, share.file_id);
+  if (!file || file.type !== "file" || !file.r2_key)
+    return c.json({ error: "Not found" }, 404);
+
+  return streamInline(c, file);
+});
+
+// GET /api/share/:token/file/:fileId/preview — inline stream a file inside a shared folder
+app.get("/api/share/:token/file/:fileId/preview", async (c) => {
+  const share = await getShareByToken(c.env.DB, c.req.param("token"));
+  if (!share) return c.json({ error: "Share not found" }, 404);
+  if (share.expires_at && Date.now() > share.expires_at)
+    return c.json({ error: "Expired" }, 410);
+
+  const rootFile = await getFile(c.env.DB, share.file_id);
+  if (!rootFile || rootFile.type !== "folder")
+    return c.json({ error: "Not a folder share" }, 400);
+
+  const fileId = c.req.param("fileId")!;
+  const ok = await isDescendantOf(c.env.DB, fileId, share.file_id);
+  if (!ok) return c.json({ error: "Forbidden" }, 403);
+
+  const file = await getFile(c.env.DB, fileId);
+  if (!file || file.type !== "file" || !file.r2_key)
+    return c.json({ error: "Not found" }, 404);
+
+  return streamInline(c, file);
 });
 
 // GET /api/share/:token/browse?folderId=<id>  — list contents of a shared folder (or subfolder)
